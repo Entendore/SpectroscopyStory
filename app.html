@@ -1,0 +1,3263 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FIRST LIGHT — Exoplanet Spectroscopy Division</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link
+    href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0a0c0f;
+      --panel: #0f1318;
+      --panel2: #12171d;
+      --plot: #0c0f14;
+      --line: #232a33;
+      --line2: #1a2028;
+      --tx: #d8d4c8;
+      --tx2: #8b93a0;
+      --tx3: #5b6470;
+      --amber: #e8a33d;
+      --amber-b: #ffc46b;
+      --red: #d96a5f;
+      --grn: #79c98d;
+      --mono: 'IBM Plex Mono', monospace;
+      --disp: 'Space Grotesk', sans-serif;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box
+    }
+
+    html,
+    body {
+      height: 100%
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--tx);
+      font-family: var(--disp);
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased
+    }
+
+    button {
+      font-family: inherit;
+      color: inherit;
+      background: none;
+      border: none;
+      cursor: pointer
+    }
+
+    canvas {
+      display: block;
+      user-select: none;
+      touch-action: none
+    }
+
+    ::-webkit-scrollbar {
+      width: 9px;
+      height: 9px
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #232a33;
+      border-radius: 5px;
+      border: 2px solid var(--bg)
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent
+    }
+
+    #app {
+      height: 100vh;
+      display: flex;
+      flex-direction: column
+    }
+
+    /* ---------- topbar ---------- */
+    #topbar {
+      height: 52px;
+      flex: none;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 0 18px;
+      border-bottom: 1px solid var(--line);
+      background: var(--bg);
+      z-index: 40
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer
+    }
+
+    .logo svg {
+      flex: none
+    }
+
+    .logo b {
+      font-size: 15px;
+      letter-spacing: .22em;
+      font-weight: 700
+    }
+
+    .logo small {
+      font-family: var(--mono);
+      font-size: 9.5px;
+      letter-spacing: .14em;
+      color: var(--tx3);
+      display: block;
+      margin-top: 1px
+    }
+
+    #tbChip {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--amber);
+      border: 1px solid #3a3220;
+      padding: 5px 10px;
+      letter-spacing: .06em
+    }
+
+    .spacer {
+      flex: 1
+    }
+
+    .tb-stat {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--tx2);
+      letter-spacing: .05em
+    }
+
+    .tb-stat b {
+      color: var(--tx);
+      font-weight: 600
+    }
+
+    .tb-btn {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-family: var(--mono);
+      font-size: 10.5px;
+      letter-spacing: .12em;
+      color: var(--tx2);
+      border: 1px solid var(--line);
+      padding: 7px 12px;
+      transition: .15s
+    }
+
+    .tb-btn:hover {
+      color: var(--amber);
+      border-color: var(--amber)
+    }
+
+    .tb-btn svg {
+      width: 14px;
+      height: 14px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 1.6;
+      stroke-linecap: round;
+      stroke-linejoin: round
+    }
+
+    .hidden {
+      display: none !important
+    }
+
+    main {
+      flex: 1;
+      min-height: 0;
+      position: relative
+    }
+
+    .scr {
+      position: absolute;
+      inset: 0;
+      display: none;
+      overflow-y: auto
+    }
+
+    .scr.active {
+      display: block;
+      animation: fadeUp .3s ease
+    }
+
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(8px)
+      }
+
+      to {
+        opacity: 1;
+        transform: none
+      }
+    }
+
+    /* ---------- shared ---------- */
+    .kicker {
+      font-family: var(--mono);
+      font-size: 10.5px;
+      letter-spacing: .22em;
+      color: var(--amber);
+      text-transform: uppercase
+    }
+
+    .btn {
+      font-family: var(--mono);
+      font-size: 11.5px;
+      letter-spacing: .14em;
+      padding: 11px 20px;
+      border: 1px solid var(--line);
+      color: var(--tx);
+      transition: .15s;
+      text-transform: uppercase
+    }
+
+    .btn:hover {
+      border-color: var(--amber);
+      color: var(--amber)
+    }
+
+    .btn.primary {
+      background: var(--amber);
+      border-color: var(--amber);
+      color: #131313;
+      font-weight: 600
+    }
+
+    .btn.primary:hover {
+      background: var(--amber-b);
+      border-color: var(--amber-b);
+      color: #131313
+    }
+
+    .btn:disabled {
+      opacity: .35;
+      cursor: default;
+      pointer-events: none
+    }
+
+    .sec-label {
+      font-family: var(--mono);
+      font-size: 10.5px;
+      letter-spacing: .2em;
+      color: var(--tx3);
+      margin: 26px 0 8px
+    }
+
+    /* ---------- title ---------- */
+    #scr-title {
+      position: relative
+    }
+
+    #starfield {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%
+    }
+
+    .title-wrap {
+      position: relative;
+      max-width: 880px;
+      margin: 0 auto;
+      padding: 6vh 28px 60px;
+      z-index: 2
+    }
+
+    h1.big {
+      font-size: clamp(52px, 8.2vw, 98px);
+      font-weight: 700;
+      letter-spacing: -.035em;
+      line-height: .95;
+      margin: 14px 0 18px
+    }
+
+    .sub {
+      font-size: 16.5px;
+      line-height: 1.55;
+      color: var(--tx2);
+      max-width: 640px
+    }
+
+    .sub b {
+      color: var(--tx);
+      font-weight: 500
+    }
+
+    .steps {
+      margin: 28px 0 6px;
+      display: flex;
+      flex-direction: column;
+      border-top: 1px solid var(--line)
+    }
+
+    .step {
+      display: flex;
+      gap: 18px;
+      padding: 15px 4px;
+      border-bottom: 1px solid var(--line);
+      align-items: baseline
+    }
+
+    .step i {
+      font-family: var(--mono);
+      font-style: normal;
+      font-size: 11px;
+      color: var(--amber);
+      letter-spacing: .1em;
+      flex: none;
+      width: 34px
+    }
+
+    .step b {
+      font-size: 14px;
+      letter-spacing: .06em;
+      font-weight: 600;
+      flex: none;
+      width: 180px
+    }
+
+    .step span {
+      font-size: 13px;
+      color: var(--tx2);
+      line-height: 1.5
+    }
+
+    .m-row {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 13px 6px;
+      border-bottom: 1px solid var(--line2);
+      cursor: pointer;
+      transition: .13s
+    }
+
+    .m-row:hover:not(.locked) {
+      background: rgba(232, 163, 61, .05)
+    }
+
+    .m-idx {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--tx3);
+      width: 26px;
+      flex: none
+    }
+
+    .m-info {
+      flex: 1;
+      min-width: 0
+    }
+
+    .m-info b {
+      font-size: 14.5px;
+      font-weight: 600;
+      letter-spacing: .02em
+    }
+
+    .m-info em {
+      display: block;
+      font-style: normal;
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--tx3);
+      letter-spacing: .08em;
+      margin-top: 3px
+    }
+
+    .m-st {
+      font-family: var(--mono);
+      font-size: 10.5px;
+      letter-spacing: .1em;
+      flex: none;
+      text-align: right
+    }
+
+    .m-row.done .m-st {
+      color: var(--grn)
+    }
+
+    .m-row.ready .m-st {
+      color: var(--amber)
+    }
+
+    .m-row.locked {
+      cursor: default
+    }
+
+    .m-row.locked .m-info b {
+      color: var(--tx3)
+    }
+
+    .m-row.locked .m-st {
+      color: #3d454f
+    }
+
+    .m-row.srv .m-info b {
+      color: var(--amber-b)
+    }
+
+    #btnStart {
+      margin-top: 26px;
+      padding: 14px 34px;
+      font-size: 12.5px
+    }
+
+    /* ---------- briefing ---------- */
+    .brief-wrap {
+      max-width: 1060px;
+      margin: 0 auto;
+      padding: 44px 28px 70px
+    }
+
+    .brief-grid {
+      display: grid;
+      grid-template-columns: 1fr 400px;
+      gap: 44px;
+      margin-top: 24px
+    }
+
+    @media(max-width:920px) {
+      .brief-grid {
+        grid-template-columns: 1fr
+      }
+    }
+
+    h2.mission {
+      font-size: clamp(32px, 4.4vw, 50px);
+      font-weight: 700;
+      letter-spacing: -.02em;
+      margin: 10px 0 4px
+    }
+
+    .kind {
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: .18em;
+      color: var(--tx2)
+    }
+
+    .dossier {
+      margin-top: 24px;
+      border-top: 1px solid var(--line)
+    }
+
+    .d-row {
+      display: flex;
+      border-bottom: 1px solid var(--line2);
+      padding: 10px 4px;
+      gap: 14px
+    }
+
+    .d-row dt {
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: .16em;
+      color: var(--tx3);
+      width: 150px;
+      flex: none;
+      padding-top: 2px
+    }
+
+    .d-row dd {
+      font-family: var(--mono);
+      font-size: 12.5px;
+      letter-spacing: .02em
+    }
+
+    .notes {
+      margin-top: 22px;
+      font-size: 14.5px;
+      line-height: 1.65;
+      color: var(--tx2);
+      border-left: 2px solid var(--amber);
+      padding: 2px 0 2px 18px;
+      max-width: 580px
+    }
+
+    .schem-box {
+      border: 1px solid var(--line);
+      background: var(--plot)
+    }
+
+    #schem {
+      width: 100%;
+      height: 270px
+    }
+
+    .schem-cap {
+      font-family: var(--mono);
+      font-size: 10.5px;
+      line-height: 1.6;
+      color: var(--tx3);
+      padding: 12px 2px;
+      letter-spacing: .02em
+    }
+
+    #btnOpen {
+      margin-top: 14px;
+      width: 100%;
+      padding: 14px
+    }
+
+    /* ---------- analysis ---------- */
+    #scr-analysis {
+      display: flex;
+      overflow: hidden
+    }
+
+    .an-left {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      padding: 12px 0 0 12px;
+      gap: 10px
+    }
+
+    .spec-head {
+      display: flex;
+      align-items: baseline;
+      gap: 14px;
+      padding: 2px 4px;
+      flex-wrap: wrap
+    }
+
+    .spec-head h3 {
+      font-size: 17px;
+      font-weight: 600;
+      letter-spacing: .02em
+    }
+
+    .spec-head .code {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--amber);
+      letter-spacing: .1em
+    }
+
+    .spec-head .kind {
+      font-size: 10px
+    }
+
+    .spec-head .right {
+      margin-left: auto;
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--tx3);
+      letter-spacing: .1em
+    }
+
+    .spec-wrap {
+      flex: 1;
+      min-height: 0;
+      position: relative;
+      border: 1px solid var(--line);
+      background: var(--plot)
+    }
+
+    #specMain {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      cursor: crosshair
+    }
+
+    .spec-wrap.measuring #specMain {
+      cursor: ew-resize
+    }
+
+    .zoom-wrap {
+      height: 86px;
+      flex: none;
+      position: relative;
+      border: 1px solid var(--line);
+      background: var(--plot)
+    }
+
+    #specZoom {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      cursor: pointer
+    }
+
+    .featbar {
+      flex: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 4px 12px;
+      min-height: 46px;
+      flex-wrap: wrap
+    }
+
+    .fb-label {
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: .18em;
+      color: var(--tx3)
+    }
+
+    .fb-label b {
+      color: var(--amber)
+    }
+
+    .f-chip {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-family: var(--mono);
+      font-size: 10.5px;
+      letter-spacing: .04em;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      padding: 4px 6px 4px 8px;
+      cursor: pointer
+    }
+
+    .f-chip:hover {
+      background: #181e26
+    }
+
+    .f-chip i {
+      width: 7px;
+      height: 7px;
+      flex: none
+    }
+
+    .f-chip span {
+      color: var(--tx2)
+    }
+
+    .f-chip svg {
+      width: 9px;
+      height: 9px;
+      stroke: var(--tx3);
+      stroke-width: 2;
+      fill: none;
+      cursor: pointer
+    }
+
+    .f-chip svg:hover {
+      stroke: var(--red)
+    }
+
+    .fb-hint {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--tx3);
+      letter-spacing: .04em
+    }
+
+    #measChip {
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: .05em;
+      border: 1px solid var(--line);
+      padding: 4px 8px;
+      color: var(--tx2)
+    }
+
+    #measChip.ok {
+      border-color: #3f5c48;
+      color: var(--grn)
+    }
+
+    #measChip.low {
+      border-color: #4a4130;
+      color: var(--amber-b)
+    }
+
+    #btnClear {
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: .12em;
+      color: var(--tx3);
+      border-bottom: 1px solid transparent;
+      padding: 2px 0
+    }
+
+    #btnClear:hover {
+      color: var(--red);
+      border-color: var(--red)
+    }
+
+    .an-right {
+      width: 342px;
+      flex: none;
+      border-left: 1px solid var(--line);
+      background: var(--panel);
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      overflow-y: auto
+    }
+
+    .inst-strip {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--line);
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: .08em;
+      color: var(--tx2);
+      flex-wrap: wrap
+    }
+
+    .inst-strip b {
+      color: var(--tx)
+    }
+
+    .inst-btn {
+      font-family: var(--mono);
+      font-size: 9.5px;
+      letter-spacing: .1em;
+      border: 1px solid #3a3220;
+      color: var(--amber);
+      padding: 4px 8px;
+      margin-left: auto
+    }
+
+    .inst-btn:hover:not(:disabled) {
+      background: var(--amber);
+      color: #131313
+    }
+
+    .inst-btn:disabled {
+      opacity: .35;
+      cursor: default
+    }
+
+    .inst-btn+.inst-btn {
+      margin-left: 0
+    }
+
+    .inst-btn.tog {
+      border-color: var(--line);
+      color: var(--tx2)
+    }
+
+    .inst-btn.tog.active {
+      border-color: var(--amber);
+      color: var(--amber)
+    }
+
+    .lib-head,
+    .mon-head,
+    .v-head,
+    .a-head {
+      font-family: var(--mono);
+      font-size: 9.5px;
+      letter-spacing: .2em;
+      color: var(--tx3);
+      padding: 12px 14px 8px;
+      border-top: 1px solid var(--line);
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline
+    }
+
+    .lib-head span {
+      font-size: 9px;
+      letter-spacing: .06em;
+      color: #4a525d
+    }
+
+    #libList {
+      flex: 1 1 auto;
+      min-height: 100px;
+      overflow-y: auto
+    }
+
+    .lib-row {
+      display: grid;
+      grid-template-columns: 12px 1fr 96px;
+      gap: 10px;
+      align-items: center;
+      padding: 7px 14px;
+      border-bottom: 1px solid var(--line2);
+      transition: .12s
+    }
+
+    .lib-row:hover {
+      background: rgba(232, 163, 61, .05)
+    }
+
+    .lib-row .dot {
+      width: 8px;
+      height: 8px
+    }
+
+    .lib-txt b {
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: .02em
+    }
+
+    .lib-txt em {
+      display: block;
+      font-style: normal;
+      font-family: var(--mono);
+      font-size: 9.5px;
+      color: var(--tx2);
+      letter-spacing: .05em;
+      margin-top: 1px
+    }
+
+    .lib-txt small {
+      display: block;
+      font-family: var(--mono);
+      font-size: 9px;
+      color: var(--tx3);
+      margin-top: 2px;
+      letter-spacing: .03em
+    }
+
+    #ruleMon {
+      padding: 0 14px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      min-height: 40px
+    }
+
+    .rule {
+      font-family: var(--mono);
+      font-size: 10px;
+      line-height: 1.5;
+      letter-spacing: .03em;
+      padding: 7px 9px;
+      border: 1px solid var(--line);
+      color: var(--tx2);
+      animation: pop .25s ease
+    }
+
+    .rule b {
+      letter-spacing: .12em;
+      margin-right: 6px
+    }
+
+    .rule.rA {
+      border-color: #6b512a;
+      background: rgba(232, 163, 61, .10);
+      color: var(--amber-b)
+    }
+
+    .rule.rB,
+    .rule.rC,
+    .rule.rE {
+      border-color: #4a4130;
+      color: var(--amber)
+    }
+
+    .rule.rD {
+      border-color: #5c3531;
+      background: rgba(217, 106, 95, .09);
+      color: #e89a91
+    }
+
+    .mon-empty {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: #4a525d;
+      letter-spacing: .05em;
+      line-height: 1.6
+    }
+
+    @keyframes pop {
+      from {
+        opacity: 0;
+        transform: translateY(4px)
+      }
+
+      to {
+        opacity: 1;
+        transform: none
+      }
+    }
+
+    #atmoList {
+      padding: 0 14px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px
+    }
+
+    .a-row {
+      display: grid;
+      grid-template-columns: 44px 1fr 62px;
+      gap: 8px;
+      align-items: center;
+      font-family: var(--mono);
+      font-size: 10px
+    }
+
+    .a-bar {
+      height: 6px;
+      background: #161b22;
+      position: relative
+    }
+
+    .a-bar i {
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      transition: width .3s
+    }
+
+    .a-tag {
+      color: var(--tx3);
+      text-align: right;
+      letter-spacing: .06em
+    }
+
+    #verdicts {
+      padding: 0 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px
+    }
+
+    .v-opt {
+      border: 1px solid var(--line);
+      padding: 8px 11px;
+      cursor: pointer;
+      transition: .12s
+    }
+
+    .v-opt:hover {
+      border-color: #39424d
+    }
+
+    .v-opt.sel {
+      border-color: var(--amber);
+      background: rgba(232, 163, 61, .07)
+    }
+
+    .v-opt b {
+      font-family: var(--mono);
+      font-size: 10.5px;
+      letter-spacing: .16em;
+      display: block
+    }
+
+    .v-opt span {
+      font-size: 11px;
+      color: var(--tx2);
+      line-height: 1.4;
+      display: block;
+      margin-top: 2px
+    }
+
+    .v-opt.sel b {
+      color: var(--amber-b)
+    }
+
+    .conf-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px 0;
+      flex-wrap: wrap
+    }
+
+    .conf-row>span {
+      font-family: var(--mono);
+      font-size: 9.5px;
+      letter-spacing: .2em;
+      color: var(--tx3)
+    }
+
+    .conf-seg {
+      display: flex;
+      gap: 4px;
+      margin-left: auto
+    }
+
+    .conf-seg button {
+      font-family: var(--mono);
+      font-size: 9px;
+      letter-spacing: .06em;
+      border: 1px solid var(--line);
+      padding: 4px 7px;
+      color: var(--tx2)
+    }
+
+    .conf-seg button.sel {
+      border-color: var(--amber);
+      color: var(--amber-b);
+      background: rgba(232, 163, 61, .08)
+    }
+
+    #submitBtn {
+      margin: 12px 14px 14px;
+      width: calc(100% - 28px)
+    }
+
+    /* ---------- popover ---------- */
+    #popover {
+      position: fixed;
+      z-index: 90;
+      width: 280px;
+      background: var(--panel2);
+      border: 1px solid #333c47;
+      box-shadow: 0 12px 34px rgba(0, 0, 0, .55);
+      display: none
+    }
+
+    .pop-head {
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: .1em;
+      color: var(--tx3);
+      padding: 10px 12px 8px;
+      border-bottom: 1px solid var(--line2)
+    }
+
+    .pop-head b {
+      color: var(--amber);
+      font-weight: 600
+    }
+
+    #popList {
+      max-height: 240px;
+      overflow-y: auto
+    }
+
+    .pop-opt {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      width: 100%;
+      padding: 9px 12px;
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: .03em;
+      text-align: left;
+      border-bottom: 1px solid var(--line2)
+    }
+
+    .pop-opt:hover {
+      background: rgba(232, 163, 61, .08)
+    }
+
+    .pop-opt i {
+      width: 7px;
+      height: 7px;
+      flex: none
+    }
+
+    .pop-opt span {
+      margin-left: auto;
+      color: var(--tx3);
+      font-size: 10px
+    }
+
+    .pop-foot {
+      padding: 9px 12px
+    }
+
+    .pop-foot button {
+      font-family: var(--mono);
+      font-size: 9.5px;
+      letter-spacing: .12em;
+      color: var(--tx3)
+    }
+
+    .pop-foot button:hover {
+      color: var(--red)
+    }
+
+    .pop-note {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--tx2);
+      line-height: 1.55;
+      padding: 11px 12px
+    }
+
+    /* ---------- debrief ---------- */
+    .db-wrap {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 44px 28px 70px
+    }
+
+    .db-grid {
+      display: grid;
+      grid-template-columns: 1.25fr 1fr;
+      gap: 40px;
+      margin-top: 24px
+    }
+
+    @media(max-width:920px) {
+      .db-grid {
+        grid-template-columns: 1fr
+      }
+    }
+
+    .db-canvas-wrap {
+      border: 1px solid var(--line);
+      background: var(--plot)
+    }
+
+    #specTruth {
+      width: 100%;
+      height: 330px
+    }
+
+    .db-legend {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 12px
+    }
+
+    .lg {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-family: var(--mono);
+      font-size: 9.5px;
+      letter-spacing: .08em;
+      color: var(--tx2);
+      border: 1px solid var(--line2);
+      padding: 4px 8px
+    }
+
+    .lg i {
+      width: 7px;
+      height: 7px
+    }
+
+    .score-total {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border: 1px solid var(--line);
+      padding: 13px 16px;
+      margin-bottom: 14px;
+      gap: 14px
+    }
+
+    .score-total span {
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: .2em;
+      color: var(--tx3)
+    }
+
+    .score-total .num {
+      font-family: var(--mono);
+      font-size: 22px;
+      color: var(--grn)
+    }
+
+    .score-total .num.neg {
+      color: var(--red)
+    }
+
+    .grade {
+      text-align: right
+    }
+
+    .grade span {
+      font-family: var(--mono);
+      font-size: 9px;
+      letter-spacing: .2em;
+      color: var(--tx3);
+      display: block
+    }
+
+    .grade b {
+      font-family: var(--mono);
+      font-size: 22px
+    }
+
+    .db-row {
+      display: flex;
+      gap: 10px;
+      align-items: baseline;
+      padding: 7px 2px;
+      border-bottom: 1px solid var(--line2);
+      font-family: var(--mono);
+      font-size: 11px
+    }
+
+    .db-row .tag {
+      width: 74px;
+      flex: none;
+      font-size: 9.5px;
+      letter-spacing: .1em
+    }
+
+    .db-row.ok .tag {
+      color: var(--grn)
+    }
+
+    .db-row.mid .tag {
+      color: var(--amber)
+    }
+
+    .db-row.bad .tag {
+      color: var(--red)
+    }
+
+    .db-row.sys .tag {
+      color: #8b93a0
+    }
+
+    .db-row .what {
+      color: var(--tx);
+      flex: none
+    }
+
+    .db-row .why {
+      color: var(--tx3);
+      font-size: 10px;
+      line-height: 1.45
+    }
+
+    .db-row .pts {
+      margin-left: auto;
+      flex: none
+    }
+
+    .db-row.ok .pts {
+      color: var(--grn)
+    }
+
+    .db-row.mid .pts {
+      color: var(--amber)
+    }
+
+    .db-row.bad .pts {
+      color: var(--red)
+    }
+
+    .db-missed {
+      margin-top: 14px
+    }
+
+    .db-missed .dm {
+      font-family: var(--mono);
+      font-size: 10.5px;
+      color: #c98b83;
+      padding: 5px 2px;
+      letter-spacing: .03em
+    }
+
+    .db-missed .dm.faint {
+      color: #5b6470
+    }
+
+    .db-missed .dm.sys {
+      color: #8b93a0
+    }
+
+    .cmp {
+      display: flex;
+      align-items: stretch;
+      gap: 10px;
+      margin: 20px 0 6px
+    }
+
+    .cmp-box {
+      flex: 1;
+      border: 1px solid var(--line);
+      padding: 10px 13px
+    }
+
+    .cmp-box span {
+      font-family: var(--mono);
+      font-size: 9px;
+      letter-spacing: .18em;
+      color: var(--tx3);
+      display: block;
+      margin-bottom: 5px
+    }
+
+    .cmp-box b {
+      font-family: var(--mono);
+      font-size: 13px;
+      letter-spacing: .06em
+    }
+
+    .cmp-box.you b.right {
+      color: var(--grn)
+    }
+
+    .cmp-box.you b.wrong {
+      color: var(--red)
+    }
+
+    .cmp-box.truth b {
+      color: var(--amber-b)
+    }
+
+    .cmp-arrow {
+      align-self: center;
+      color: var(--tx3);
+      font-family: var(--mono)
+    }
+
+    .sci-note {
+      margin-top: 20px;
+      font-size: 14px;
+      line-height: 1.68;
+      color: var(--tx2);
+      border-top: 1px solid var(--line);
+      padding-top: 18px
+    }
+
+    .sci-note b {
+      color: var(--tx);
+      font-weight: 600
+    }
+
+    .rev-quote {
+      font-family: var(--mono);
+      font-size: 11.5px;
+      color: var(--amber);
+      letter-spacing: .02em;
+      display: block;
+      margin-bottom: 10px
+    }
+
+    .db-actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 24px;
+      flex-wrap: wrap
+    }
+
+    /* ---------- final ---------- */
+    .fn-wrap {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 8vh 28px 70px
+    }
+
+    .fn-rank {
+      font-size: clamp(30px, 4.5vw, 46px);
+      font-weight: 700;
+      letter-spacing: -.01em;
+      margin: 12px 0 4px
+    }
+
+    .fn-total {
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--tx2);
+      letter-spacing: .1em;
+      margin-bottom: 24px
+    }
+
+    .fn-total b {
+      color: var(--amber);
+      font-size: 15px
+    }
+
+    .badge-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-top: 8px
+    }
+
+    @media(max-width:700px) {
+      .badge-grid {
+        grid-template-columns: repeat(2, 1fr)
+      }
+    }
+
+    .badge {
+      border: 1px solid var(--line);
+      padding: 10px 12px
+    }
+
+    .badge.on {
+      border-color: #6b512a;
+      background: rgba(232, 163, 61, .06)
+    }
+
+    .badge b {
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: .12em;
+      display: block
+    }
+
+    .badge.on b {
+      color: var(--amber-b)
+    }
+
+    .badge:not(.on) b {
+      color: #3d454f
+    }
+
+    .badge span {
+      font-size: 10.5px;
+      color: var(--tx3);
+      line-height: 1.45;
+      display: block;
+      margin-top: 4px
+    }
+
+    .close-line {
+      margin-top: 26px;
+      font-size: 14.5px;
+      line-height: 1.7;
+      color: var(--tx2);
+      max-width: 600px
+    }
+
+    .fn-actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 30px
+    }
+
+    /* ---------- handbook ---------- */
+    #modalHb {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      background: rgba(6, 8, 10, .78);
+      display: none;
+      align-items: flex-start;
+      justify-content: center;
+      overflow-y: auto;
+      padding: 5vh 20px 60px
+    }
+
+    #modalHb.open {
+      display: flex
+    }
+
+    .hb-panel {
+      background: var(--panel);
+      border: 1px solid #333c47;
+      max-width: 840px;
+      width: 100%;
+      padding: 34px 38px 44px;
+      position: relative
+    }
+
+    .hb-panel h2 {
+      font-size: 26px;
+      font-weight: 700;
+      letter-spacing: -.01em;
+      margin-top: 8px
+    }
+
+    #hbClose {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      width: 32px;
+      height: 32px;
+      border: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: center
+    }
+
+    #hbClose:hover {
+      border-color: var(--red);
+      color: var(--red)
+    }
+
+    #hbClose svg {
+      width: 12px;
+      height: 12px;
+      stroke: currentColor;
+      stroke-width: 2;
+      fill: none
+    }
+
+    #hbBody h3 {
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: .22em;
+      color: var(--amber);
+      margin: 32px 0 12px;
+      font-weight: 500
+    }
+
+    #hbBody p {
+      font-size: 13.5px;
+      line-height: 1.7;
+      color: var(--tx2);
+      margin-bottom: 10px
+    }
+
+    #hbBody p b {
+      color: var(--tx);
+      font-weight: 600
+    }
+
+    .hb-step {
+      display: flex;
+      gap: 12px;
+      padding: 8px 0;
+      font-size: 13px;
+      color: var(--tx2);
+      line-height: 1.5
+    }
+
+    .hb-step i {
+      font-family: var(--mono);
+      font-style: normal;
+      font-size: 10px;
+      color: var(--amber);
+      width: 24px;
+      flex: none;
+      padding-top: 2px
+    }
+
+    .hb-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 6px 0 4px
+    }
+
+    .hb-table td {
+      border-bottom: 1px solid var(--line2);
+      padding: 9px 10px 9px 0;
+      font-size: 12px;
+      vertical-align: top
+    }
+
+    .hb-table td:first-child {
+      white-space: nowrap;
+      font-weight: 600;
+      width: 120px
+    }
+
+    .hb-table .dotsym {
+      display: flex;
+      align-items: center;
+      gap: 8px
+    }
+
+    .hb-table .dotsym i {
+      width: 8px;
+      height: 8px;
+      flex: none
+    }
+
+    .hb-table .bands {
+      font-family: var(--mono);
+      font-size: 10.5px;
+      color: var(--tx2);
+      letter-spacing: .02em
+    }
+
+    .hb-table .blurb {
+      color: var(--tx3);
+      font-size: 11.5px;
+      line-height: 1.5
+    }
+
+    .hb-rule {
+      border: 1px solid var(--line);
+      padding: 12px 15px;
+      margin-bottom: 8px
+    }
+
+    .hb-rule b {
+      font-family: var(--mono);
+      font-size: 10.5px;
+      letter-spacing: .14em;
+      display: block;
+      margin-bottom: 4px
+    }
+
+    .hb-rule p {
+      margin: 0;
+      font-size: 12.5px
+    }
+
+    .hb-rule.rA b {
+      color: var(--amber-b)
+    }
+
+    .hb-rule.rB b,
+    .hb-rule.rC b,
+    .hb-rule.rE b {
+      color: var(--amber)
+    }
+
+    .hb-rule.rD b {
+      color: #e89a91
+    }
+
+    kbd {
+      font-family: var(--mono);
+      font-size: 10px;
+      border: 1px solid var(--line);
+      border-bottom-width: 2px;
+      padding: 1px 6px;
+      border-radius: 3px;
+      color: var(--tx)
+    }
+
+    /* ---------- hints ---------- */
+    #hintBar {
+      position: fixed;
+      left: 18px;
+      bottom: 18px;
+      z-index: 85;
+      max-width: 400px;
+      background: var(--panel2);
+      border: 1px solid #333c47;
+      padding: 12px 14px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, .5);
+      display: none
+    }
+
+    #hintBar .h-step {
+      font-family: var(--mono);
+      font-size: 9px;
+      color: var(--amber);
+      letter-spacing: .15em
+    }
+
+    #hintBar p {
+      font-size: 12px;
+      color: var(--tx2);
+      line-height: 1.5;
+      margin-top: 5px
+    }
+
+    #hintBar div {
+      display: flex;
+      gap: 8px;
+      margin-top: 9px
+    }
+
+    #hintBar button {
+      font-family: var(--mono);
+      font-size: 9.5px;
+      letter-spacing: .1em;
+      color: var(--amber);
+      border: 1px solid #3a3220;
+      padding: 5px 10px
+    }
+
+    #hintBar button.ghost {
+      color: var(--tx3);
+      border-color: var(--line)
+    }
+
+    /* ---------- toasts ---------- */
+    #toasts {
+      position: fixed;
+      bottom: 26px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 120;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      align-items: center;
+      pointer-events: none
+    }
+
+    .toast {
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: .06em;
+      background: var(--panel2);
+      border: 1px solid #333c47;
+      padding: 10px 18px;
+      opacity: 0;
+      transform: translateY(8px);
+      transition: .25s
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: none
+    }
+
+    /* ---------- responsive ---------- */
+    @media(max-width:1000px) {
+      #scr-analysis {
+        flex-direction: column;
+        overflow-y: auto
+      }
+
+      .an-left {
+        padding: 12px 12px 0;
+        flex: none
+      }
+
+      .spec-wrap {
+        flex: none;
+        height: 44vh
+      }
+
+      .an-right {
+        width: 100%;
+        flex: none;
+        border-left: none;
+        border-top: 1px solid var(--line)
+      }
+
+      #libList {
+        max-height: 200px
+      }
+    }
+
+    @media(max-width:640px) {
+      .logo small {
+        display: none
+      }
+
+      .tb-stat {
+        display: none
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div id="app">
+    <header id="topbar">
+      <div class="logo" id="logoBtn" title="Return to title">
+        <svg width="22" height="22" viewBox="0 0 22 22">
+          <circle cx="11" cy="11" r="8.5" fill="none" stroke="#e8a33d" stroke-width="1.4" />
+          <circle cx="11" cy="11" r="2.2" fill="#e8a33d" />
+          <path d="M11 1v4M11 17v4M1 11h4M17 11h4" stroke="#e8a33d" stroke-width="1.4" />
+        </svg>
+        <div><b>FIRST LIGHT</b><small>EXOPLANET SPECTROSCOPY DIVISION</small></div>
+      </div>
+      <span id="tbChip" class="hidden"></span>
+      <div class="spacer"></div>
+      <span class="tb-stat">REP <b id="tbRep">0</b> · <span id="tbRank">STUDENT OBSERVER</span></span>
+      <button class="tb-btn" id="btnHandbook">
+        <svg viewBox="0 0 24 24">
+          <path d="M4 4h7a3 3 0 0 1 3 3v13a2.5 2.5 0 0 0-2.5-2.5H4z" />
+          <path d="M20 4h-6v16h6z" opacity=".55" />
+        </svg>
+        HANDBOOK
+      </button>
+      <button class="tb-btn" id="btnSound">
+        <svg id="icoOn" viewBox="0 0 24 24">
+          <path d="M4 9v6h4l5 4V5L8 9H4z" />
+          <path d="M16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11" />
+        </svg>
+        <svg id="icoOff" viewBox="0 0 24 24" class="hidden">
+          <path d="M4 9v6h4l5 4V5L8 9H4z" />
+          <path d="M16 9l6 6M22 9l-6 6" />
+        </svg>
+        <span id="sndLbl">SOUND</span>
+      </button>
+    </header>
+
+    <main>
+      <!-- ============ TITLE ============ -->
+      <section id="scr-title" class="scr active">
+        <canvas id="starfield"></canvas>
+        <div class="title-wrap">
+          <span class="kicker">ARGUS DEEP-SPACE ARRAY · DUTY ROTATION 7</span>
+          <h1 class="big">FIRST LIGHT</h1>
+          <p class="sub">A detective game about reading starlight. When a planet crosses its star, a whisper of its
+            atmosphere imprints itself on the light — <b>every molecule leaves a fingerprint</b>. Eight assigned worlds,
+            then the Deep Field: procedural planets without end. Some of them will lie to you.</p>
+          <div class="steps">
+            <div class="step"><i>01</i><b>WATCH THE TRANSIT</b><span>Starlight filters through the planet's air on its
+                way to you. That's the only moment the atmosphere is visible.</span></div>
+            <div class="step"><i>02</i><b>MARK &amp; MEASURE</b><span>Click dips to log features; drag across a band to
+                measure its depth against the noise corridor. Real detections escape the corridor.</span></div>
+            <div class="step"><i>03</i><b>APPLY THE RULES</b><span>The disequilibrium monitor scores your atmosphere
+                live. Some fingerprints are impostors — stellar lines, clouds, contamination, dead chemistry.</span>
+            </div>
+            <div class="step"><i>04</i><b>FILE YOUR VERDICT</b><span>Abiotic, inconclusive, or biosignature — and stake
+                your reputation on the confidence you choose. Sometimes “inconclusive” is the bravest word in
+                science.</span></div>
+          </div>
+          <div class="sec-label">MISSION LOG — CLEARANCE LEVEL <span id="clrLvl">1</span>/8</div>
+          <div id="missionList"></div>
+          <button class="btn primary" id="btnStart">BEGIN SHIFT</button>
+        </div>
+      </section>
+
+      <!-- ============ BRIEFING ============ -->
+      <section id="scr-brief" class="scr">
+        <div class="brief-wrap">
+          <span class="kicker" id="brCode">MISSION MN-01</span>
+          <h2 class="mission" id="brName">—</h2>
+          <div class="kind" id="brKind">—</div>
+          <div class="brief-grid">
+            <div>
+              <dl class="dossier">
+                <div class="d-row">
+                  <dt>HOST STAR</dt>
+                  <dd id="brStar">—</dd>
+                </div>
+                <div class="d-row">
+                  <dt>DISTANCE</dt>
+                  <dd id="brDist">—</dd>
+                </div>
+                <div class="d-row">
+                  <dt>PLANET RADIUS</dt>
+                  <dd id="brRadius">—</dd>
+                </div>
+                <div class="d-row">
+                  <dt>EQUIL. TEMPERATURE</dt>
+                  <dd id="brTeq">—</dd>
+                </div>
+                <div class="d-row">
+                  <dt>ORBITAL PERIOD</dt>
+                  <dd id="brPeriod">—</dd>
+                </div>
+                <div class="d-row">
+                  <dt>TRANSIT DEPTH</dt>
+                  <dd id="brDepth">—</dd>
+                </div>
+                <div class="d-row">
+                  <dt>BASELINE SNR</dt>
+                  <dd id="brSnr">—</dd>
+                </div>
+                <div class="d-row">
+                  <dt>PIPELINE FLAGS</dt>
+                  <dd id="brFlags">—</dd>
+                </div>
+              </dl>
+              <p class="notes" id="brNotes">—</p>
+            </div>
+            <div>
+              <div class="schem-box"><canvas id="schem"></canvas></div>
+              <p class="schem-cap">GEOMETRY — A transit is the only moment the planet's air is visible. Starlight skips
+                through the atmospheric annulus (amber ring); molecules subtract their wavelengths, and the light curve
+                dips a fraction of a percent.</p>
+              <button class="btn primary" id="btnOpen">OPEN SPECTROGRAPH →</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ ANALYSIS ============ -->
+      <section id="scr-analysis" class="scr">
+        <div class="an-left">
+          <div class="spec-head">
+            <span class="code" id="shCode">MN-01</span>
+            <h3 id="shName">—</h3>
+            <span class="kind" id="shKind">—</span>
+            <span class="right" id="shRes">TRANSMISSION SPECTRUM · R≈70 · 0.38–5.0 μm · LOG λ</span>
+          </div>
+          <div class="spec-wrap" id="specBox"><canvas id="specMain"></canvas></div>
+          <div class="zoom-wrap"><canvas id="specZoom"></canvas></div>
+          <div class="featbar">
+            <span class="fb-label">OBSERVING LOG · <b id="featCount">0</b></span>
+            <div id="featChips" style="display:flex;gap:7px;flex-wrap:wrap"></div>
+            <span class="fb-hint" id="fbHint">click a dip to log · drag to measure · right-click a marker to
+              delete</span>
+            <span id="measChip" class="hidden"></span>
+            <div class="spacer"></div>
+            <button id="btnClear">CLEAR ALL</button>
+          </div>
+        </div>
+        <aside class="an-right">
+          <div class="inst-strip">
+            INTEGRATION <b id="instInt">3.2 h</b> · <b id="instSnr">SNR 60</b>
+            <button id="btnCorr" class="inst-btn tog active">σ-CORRIDOR</button>
+            <button id="btnResolve" class="inst-btn">RESOLVE ×4</button>
+            <button id="btnExtend" class="inst-btn">+6 h</button>
+          </div>
+          <div class="lib-head">SPECTRAL TEMPLATE LIBRARY<span>hover to project band guides</span></div>
+          <div id="libList"></div>
+          <div class="mon-head">DISEQUILIBRIUM MONITOR</div>
+          <div id="ruleMon"></div>
+          <div class="a-head">ATMOSPHERE MODEL (ROUGH)<span>from measured depths</span></div>
+          <div id="atmoList"></div>
+          <div class="v-head">FILE VERDICT</div>
+          <div id="verdicts">
+            <div class="v-opt" data-v="abiotic"><b>ABIOTIC</b><span>Chemistry and geology explain every feature.</span>
+            </div>
+            <div class="v-opt sel" data-v="inc"><b>INCONCLUSIVE</b><span>Signal too weak or genuinely ambiguous.</span>
+            </div>
+            <div class="v-opt" data-v="bio"><b>BIOSIGNATURE</b><span>Active biology is the best explanation.</span>
+            </div>
+          </div>
+          <div class="conf-row"><span>CONFIDENCE</span>
+            <div class="conf-seg">
+              <button data-c="0.6">CAUTIOUS ×0.6</button>
+              <button data-c="1" class="sel">STANDARD ×1</button>
+              <button data-c="1.6">CONVICTION ×1.6</button>
+            </div>
+          </div>
+          <button class="btn primary" id="submitBtn">SUBMIT REPORT</button>
+        </aside>
+      </section>
+
+      <!-- ============ DEBRIEF ============ -->
+      <section id="scr-debrief" class="scr">
+        <div class="db-wrap">
+          <span class="kicker">MISSION DEBRIEF · PEER REVIEW</span>
+          <h2 class="mission" id="dbHead">—</h2>
+          <div class="db-grid">
+            <div>
+              <div class="db-canvas-wrap"><canvas id="specTruth"></canvas></div>
+              <div class="db-legend" id="dbLegend"></div>
+            </div>
+            <div>
+              <div class="score-total">
+                <span>MISSION SCORE</span>
+                <b class="num" id="dbScore">+0</b>
+                <div class="grade"><span>PEER GRADE</span><b id="dbGrade">—</b></div>
+              </div>
+              <div id="dbRows"></div>
+              <div class="db-missed" id="dbMissed"></div>
+              <div class="cmp">
+                <div class="cmp-box you"><span>YOUR VERDICT</span><b id="cmpYou">—</b></div>
+                <div class="cmp-arrow">→</div>
+                <div class="cmp-box truth"><span>GROUND TRUTH</span><b id="cmpTruth">—</b></div>
+              </div>
+              <div class="sci-note" id="dbNote">—</div>
+              <div class="db-actions">
+                <button class="btn" id="btnRetry">RE-OBSERVE</button>
+                <button class="btn primary" id="btnNext">NEXT MISSION →</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ FINAL ============ -->
+      <section id="scr-final" class="scr">
+        <div class="fn-wrap">
+          <span class="kicker">END OF ROTATION · CAREER REPORT</span>
+          <div class="fn-rank" id="fnRank">—</div>
+          <div class="fn-total">CAREER REP <b id="fnTotal">0</b> · <span id="fnNext"></span></div>
+          <div id="fnStats"></div>
+          <div class="sec-label">PERSONAL SPECTRAL CATALOG</div>
+          <div class="badge-grid" id="fnCatalog"></div>
+          <div class="sec-label">COMMENDATIONS</div>
+          <div class="badge-grid" id="fnBadges"></div>
+          <div class="sec-label">MISSION RECORD</div>
+          <div id="fnTable"></div>
+          <p class="close-line">The array is yours now. Somewhere in the archive there are four thousand more spectra
+            with no owner's name on them — most will be gas giants and dead rock. But you only need one. The Deep Field
+            is always open.</p>
+          <div class="fn-actions">
+            <button class="btn primary" id="btnDeep">ENTER DEEP FIELD</button>
+            <button class="btn" id="btnReplay">NEW ROTATION</button>
+            <button class="btn" id="btnTitle2">BACK TO TITLE</button>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- popover -->
+  <div id="popover">
+    <div class="pop-head" id="popHead"></div>
+    <div id="popList"></div>
+    <div class="pop-foot"><button id="popClose">ESC · DISMISS</button></div>
+  </div>
+
+  <!-- hints -->
+  <div id="hintBar">
+    <span class="h-step" id="hintStep">PROTOCOL 1/7</span>
+    <p id="hintTxt"></p>
+    <div><button id="hintNext">NEXT →</button><button id="hintSkip" class="ghost">SKIP</button></div>
+  </div>
+
+  <!-- handbook -->
+  <div id="modalHb">
+    <div class="hb-panel">
+      <button id="hbClose"><svg viewBox="0 0 24 24">
+          <path d="M5 5l14 14M19 5L5 19" />
+        </svg></button>
+      <span class="kicker">FIELD HANDBOOK · REV 14</span>
+      <h2>Reading Alien Skies</h2>
+      <div id="hbBody"></div>
+    </div>
+  </div>
+
+  <div id="toasts"></div>
+
+  <script>
+    'use strict';
+    /* ================= helpers ================= */
+    const el = id => document.getElementById(id);
+    const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+    function mulberry32(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+    function rr(ctx, x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+    function pctl(a, p) { const s = [ ...a ].sort((x, y) => x - y); return s[ clamp(Math.round(p * (s.length - 1)), 0, s.length - 1) ]; }
+    function toast(msg) { const t = document.createElement('div'); t.className = 'toast'; t.textContent = msg; el('toasts').appendChild(t); requestAnimationFrame(() => t.classList.add('show')); setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 300); }, 2800); }
+    function prep(cv) {
+      const dpr = window.devicePixelRatio || 1, w = cv.clientWidth, h = cv.clientHeight;
+      const W = Math.max(1, Math.round(w * dpr)), H = Math.max(1, Math.round(h * dpr));
+      if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; }
+      const c = cv.getContext('2d'); c.setTransform(dpr, 0, 0, dpr, 0, 0); c.clearRect(0, 0, w, h);
+      return [ c, w, h ];
+    }
+
+    /* ================= data ================= */
+    const WMIN = 0.38, WMAX = 5.0, LR = Math.log(WMAX / WMIN), TMAX = 1.05;
+    const w2x = (w, W) => Math.log(w / WMIN) / LR * W;
+    const x2w = (x, W) => Math.exp(Math.log(WMIN) + x / W * LR);
+
+    const MOLS = {
+      H2O: {
+        sym: 'H₂O', name: 'Water vapor', color: '#5fa8d3',
+        bands: [ { c: 0.94, w: 0.02, d: 0.22 }, { c: 1.13, w: 0.02, d: 0.28, hr: 1.126 }, { c: 1.40, w: 0.045, d: 0.62, hr: 1.392 }, { c: 1.90, w: 0.055, d: 0.66 }, { c: 2.70, w: 0.09, d: 0.85, hr: 2.712 } ],
+        blurb: 'The solvent of life. Also common in stars and hot gas giants — context matters.'
+      },
+      O2: {
+        sym: 'O₂', name: 'Oxygen', color: '#e8a33d',
+        bands: [ { c: 0.69, w: 0.007, d: 0.09 }, { c: 0.760, w: 0.006, d: 0.45 }, { c: 1.268, w: 0.012, d: 0.16 } ],
+        blurb: 'Reactive — it only accumulates if something keeps producing it. Photosynthesis, or catastrophic ocean loss.'
+      },
+      O3: {
+        sym: 'O₃', name: 'Ozone', color: '#b48ead',
+        bands: [ { c: 0.60, w: 0.05, d: 0.14 } ],
+        blurb: 'A proxy for O₂: the broad, shallow Chappuis dip near 0.6 μm.'
+      },
+      CH4: {
+        sym: 'CH₄', name: 'Methane', color: '#79c98d',
+        bands: [ { c: 1.15, w: 0.03, d: 0.24, hr: 1.158 }, { c: 1.40, w: 0.035, d: 0.30, hr: 1.414 }, { c: 1.66, w: 0.03, d: 0.42, hr: 1.674 }, { c: 2.20, w: 0.04, d: 0.34 }, { c: 2.32, w: 0.035, d: 0.38 }, { c: 3.31, w: 0.07, d: 0.78 } ],
+        blurb: 'Destroyed by oxygen chemistry — but also stable for eons in reducing atmospheres (Titan). Methane alone is not life.'
+      },
+      CO2: {
+        sym: 'CO₂', name: 'Carbon dioxide', color: '#c88f5f',
+        bands: [ { c: 1.60, w: 0.03, d: 0.20, hr: 1.590 }, { c: 2.00, w: 0.045, d: 0.32 }, { c: 2.68, w: 0.055, d: 0.34, hr: 2.660 }, { c: 4.30, w: 0.10, d: 0.90 } ],
+        blurb: 'Volcanic outgassing. Alone it says “rocky planet with air”, not “life”.'
+      },
+      CO: {
+        sym: 'CO', name: 'Carbon monoxide', color: '#9aa5b1',
+        bands: [ { c: 4.60, w: 0.07, d: 0.55, hr: 4.618 } ],
+        blurb: 'A chemical fuel. Abundant CO alongside CH₄ argues against a biosphere (Rule C).'
+      },
+      SO2: {
+        sym: 'SO₂', name: 'Sulfur dioxide', color: '#cdb84f',
+        bands: [ { c: 4.05, w: 0.05, d: 0.30 } ],
+        blurb: 'Volcanic gas; in hot H₂ atmospheres it forms photochemically — JWST detected it on WASP-39b in 2022.'
+      },
+      N2O: {
+        sym: 'N₂O', name: 'Nitrous oxide', color: '#d9b26f',
+        bands: [ { c: 4.50, w: 0.06, d: 0.28, hr: 4.486 } ],
+        blurb: 'Produced overwhelmingly by microbes. Watch it blend into CO territory at low resolution.'
+      },
+      O4: {
+        sym: 'O₄', name: 'O₂–O₂ collision pair', color: '#d96a5f',
+        bands: [ { c: 1.06, w: 0.03, d: 0.34 }, { c: 1.27, w: 0.03, d: 0.34, hr: 1.246 } ],
+        blurb: 'Only forms under crushing O₂ pressure. A smoking gun for abiotic oxygen buildup.'
+      },
+      VRE: {
+        sym: 'VRE', name: 'Vegetation red edge', color: '#8fbf6f',
+        bands: [ { c: 0.70, w: 0.035, d: 0.12, edge: true } ],
+        blurb: 'A reflectance step at 0.70 μm — light-harvesting pigments on a planetary scale.'
+      },
+    };
+    const LIB_ORDER = [ 'H2O', 'O2', 'O3', 'CH4', 'CO2', 'CO', 'SO2', 'N2O', 'O4', 'VRE' ];
+
+    const STARS = {
+      G: { lines: [ [ 0.3934, .004, .5 ], [ 0.3968, .004, .45 ], [ 0.4102, .005, .30 ], [ 0.4340, .005, .34 ], [ 0.4861, .006, .40 ], [ 0.5175, .006, .22 ], [ 0.5892, .005, .32 ], [ 0.6162, .005, .14 ], [ 0.6563, .006, .30 ] ] },
+      K: { lines: [ [ 0.3934, .005, .55 ], [ 0.3968, .005, .5 ], [ 0.4340, .006, .18 ], [ 0.4861, .006, .2 ], [ 0.5892, .006, .45 ], [ 0.6162, .006, .28 ], [ 0.6563, .007, .26 ], [ 0.7699, .006, .30 ], [ 0.849, .007, .22 ], [ 0.866, .007, .20 ] ] },
+      M: { lines: [ [ 0.3934, .006, .6 ], [ 0.3968, .006, .55 ], [ 0.4861, .007, .14 ], [ 0.5892, .007, .5 ], [ 0.6162, .007, .3 ], [ 0.6563, .008, .22 ], [ 0.710, .03, .30 ], [ 0.7699, .008, .5 ], [ 0.820, .012, .42 ], [ 0.880, .03, .34 ], [ 1.169, .012, .5 ], [ 1.243, .012, .5 ] ] },
+    };
+    const STAR_CLS = { G: 'G2V · 5,800 K', K: 'K2V · 4,900 K', M: 'M4V · 3,250 K' };
+
+    const MISSIONS = [
+      {
+        code: 'MN-01', target: 'WASP-13b', kind: 'HOT JUPITER · CALIBRATION', star: 'G', starCls: STAR_CLS.G, dist: '470 ly', radius: '14.7 R⊕ (1.31 RJ)', teq: '1,450 K', period: '4.35 d', depth: '1.90 %', snr: 60, haze: 0, cloud: 0, flags: 'NONE — CLEAN EVENT',
+        atmosphere: [ 'H2O', 'CO2', 'CO', 'SO2' ], life: false,
+        notes: 'Eclipse 44-C delivered a deep, clean transmission signal — the perfect shakedown cruise for the array. The pipeline also asks for confirmation of a photochemical sulfur species near 4.05 μm; JWST caught exactly that in a twin of this planet. Warm up the full protocol: click dips to log them, drag across bands to measure depths, and extend integration before trusting anything faint.',
+        sci: 'Equilibrium chemistry at 1,450 K cooks H₂O, CO₂ and CO into a puffed-up envelope — every major dip is temperature, not biology. The 4.05 μm SO₂ band is the modern exception: photochemistry, not equilibrium, and the reason this planet class made headlines in 2022. Chemistry is easy. Biology is what is left over when chemistry is done.'
+      },
+      {
+        code: 'MN-02', target: 'HYG-3842 c', kind: 'OCEAN SUPER-EARTH', star: 'K', starCls: STAR_CLS.K, dist: '61 ly', radius: '1.9 R⊕', teq: '268 K', period: '18.6 d', depth: '0.021 %', snr: 34, haze: 0, cloud: 0, flags: 'NONE — CLEAN EVENT',
+        atmosphere: [ 'H2O', 'CO2', 'O2' ], life: true,
+        notes: 'A 1.9 R⊕ ocean world in the conservative habitable zone — 268 K, steam-saturated air. Survey models permit anything from sterile brine to a living sea. The host is a quiet K2V; its spectrum is clean past 0.5 μm. Take your time in the near-infrared, and measure the 0.76 μm feature before you believe it.',
+        sci: 'The oxygen band at 0.76 μm is real, and it has company: H₂O everywhere, modest CO₂, and no CO. On a wet, temperate world, free O₂ is out of chemical equilibrium — something must be refilling it against the pull of oxidation. On Earth that something is photosynthesis, two billion years old. Notice that your “no” molecules matter as much as your “yes” molecules: the absence of CO is itself evidence.'
+      },
+      {
+        code: 'MN-03', target: 'NAI-3 d', kind: 'COLD SUB-NEPTUNE · TITAN ANALOG', star: 'K', starCls: 'K5V · 4,400 K', dist: '124 ly', radius: '2.4 R⊕', teq: '185 K', period: '31.7 d', depth: '0.031 %', snr: 40, haze: 0.35, cloud: 0, flags: 'HEAVY HAZE · SHORT-λ OPACITY',
+        atmosphere: [ 'CH4', 'CO' ], life: false,
+        notes: 'A cold sub-Neptune wrapped in photochemical smog. The pipeline models a methane-dominated atmosphere and flags a strong CO companion at 4.6 μm. No oxygen reported. The methane signature here is enormous. So was Titan\u2019s, and nobody ever accused Titan of photosynthesis. Measure before you believe.',
+        sci: 'Methane is not a biosignature by itself — it is a reduced gas that survives geologic timescales when nothing oxidizes it. With no O₂, no O₃ and no CO₂ disequilibrium, this CH₄ is standard cold-chemistry smog: accreted-ice chemistry and UV photochemistry, the Titan solution. Notice that your rule monitor stayed silent: none of the five rules fire on methane alone. Silence is information too.'
+      },
+      {
+        code: 'MN-04', target: 'VYS-1179 b', kind: 'HAZY ARCHEAN ANALOG', star: 'M', starCls: STAR_CLS.M, dist: '14 ly', radius: '1.5 R⊕', teq: '290 K', period: '9.3 d', depth: '0.09 %', snr: 26, haze: 0.26, cloud: 0, flags: 'STELLAR LINES DENSE · LOW SNR',
+        atmosphere: [ 'H2O', 'CH4', 'CO2' ], life: true,
+        notes: 'VYS-1179 is an M4V red dwarf — its spectrum is a thicket of stellar TiO and K I lines. Do not mistake the star for the planet. The target is hazy and temperate; expect noise. Extend your integration, use the σ-corridor, and only log dips that escape it.',
+        sci: 'No oxygen — and yet alive. This is Archean Earth, three billion years ago: a microbial ocean, methanogens exhaling CH₄ into a CO₂–H₂O atmosphere. Methane plus carbon dioxide with no CO is Rule C: methane is a fuel, and something biological is leaking it into the sky. Also note how the M-dwarf\u2019s own K I lines at 1.17/1.24 μm mimic planetary features — stellar contamination is the great impostor of this field.'
+      },
+      {
+        code: 'MN-05', target: 'KRY-77 b', kind: 'POST-RUNAWAY REMNANT', star: 'M', starCls: 'M3V · 3,300 K', dist: '22 ly', radius: '1.4 R⊕', teq: '310 K', period: '6.1 d', depth: '0.06 %', snr: 30, haze: 0.12, cloud: 0, flags: 'ANOMALOUS O₂ COLUMN — VERIFY',
+        atmosphere: [ 'O2', 'O4', 'CO2', 'CO' ], life: false,
+        notes: 'Tidally locked, 1.4 R⊕, and bone-dry — a runaway-greenhouse remnant orbiting an M3V. Theory predicts such worlds can build enormous abiotic O₂ as their oceans boil away and hydrogen escapes to space. The pipeline says the O₂ column here is extraordinary. Verify before you celebrate.',
+        sci: 'This is the false positive you were warned about. When an ocean is lost to space, hydrogen escapes and leftover O₂ accumulates with nothing to consume it — no CH₄, and critically, no H₂O: the water is gone. The O₄ collision pair at 1.06/1.27 μm only forms under O₂ pressures hundreds of times Earth\u2019s; no biosphere produces that, only a dead, desiccated atmosphere. CO and CO₂ round out a sterile volcanic mix. Rule D. Oxygen is a biosignature only in context.'
+      },
+      {
+        code: 'MN-06', target: 'DLS-99 b', kind: 'TEMPERATE SUPER-EARTH · FLAGGED', star: 'K', starCls: STAR_CLS.K, dist: '73 ly', radius: '1.6 R⊕', teq: '255 K', period: '24.1 d', depth: '0.018 %', snr: 30, haze: 0.06, cloud: 0, flags: 'UNOCCULTED STARSPOT AT FIRST INGRESS',
+        atmosphere: [ 'H2O', 'CO2' ], artifacts: [ { c: 0.60, w: 0.05, d: 0.10, label: 'unocculted starspot — transit light source effect' } ], life: false,
+        notes: 'A temperate super-Earth with an odd pipeline flag: an unocculted starspot crossed the stellar limb during first ingress. Stellar contamination can forge or erase planetary features. Treat every dip as guilty until corroborated. Ground truth is sealed until you file.',
+        sci: 'That O₃-shaped dip at 0.60 μm was never the planet\u2019s. Unocculted starspots make transits wavelength-dependent and imprint spurious features — the Transit Light Source Effect, the leading systematic in transmission spectroscopy. The real atmosphere is H₂O and CO₂: habitable-zone, but with no O₂, no CH₄, no N₂O — nothing out of equilibrium. A nice sky is not a biosphere. O₃ without O₂ to back it is a house of cards.'
+      },
+      {
+        code: 'MN-07', target: 'EP-2000-003', kind: 'UNCLASSIFIED · TEMPERATE', star: 'G', starCls: STAR_CLS.G, dist: '40 ly', radius: '1.0 R⊕', teq: '288 K', period: '365.2 d', depth: '0.0084 %', snr: 36, haze: 0.04, cloud: 0, flags: 'NONE — ANOMALOUSLY CLEAN',
+        atmosphere: [ 'H2O', 'O2', 'O3', 'CH4', 'CO2', 'N2O', 'VRE' ], life: true,
+        notes: 'This file arrived with no pipeline flags and no survey designation — just coordinates, a G2V star, and a remark from the director: “observe it yourself.” Transit depth 0.0084 %. Take all the integration you need, and be patient with the 4.5 μm region. Whatever you find here, remember why we built the array.',
+        sci: 'You already know this world. O₂ and CH₄ coexisting — Rule A, the disequilibrium that puzzled scientists a full century before anyone knew what it was. O₃ shadowing the oxygen. N₂O at 4.5 μm: a nitrogen cycle run by soil microbes. H₂O oceans. A green step at 0.70 μm where continents harvest starlight. Every rule in your handbook fires at once, because the handbook was written backwards from this spectrum. Designation EP-2000-003. The crew calls it Home. Range: forty light-years — we can see it, but we cannot yet go there. Keep observing.'
+      },
+      {
+        code: 'MN-08', target: 'THR-221 d', kind: 'CLOUDED TERRESTRIAL · HABITABLE ZONE', star: 'K', starCls: STAR_CLS.K, dist: '96 ly', radius: '1.3 R⊕', teq: '262 K', period: '41.7 d', depth: '0.011 %', snr: 18, haze: 0.45, cloud: 0.5, flatMute: 0.9, flags: 'GLOBAL CLOUD DECK · ALL BANDS SUPPRESSED',
+        atmosphere: [ 'H2O', 'CO2', 'CH4' ], life: true, noClaim: true, truth: 'inc',
+        notes: 'A habitable-zone terrestrial behind a global cloud deck. Every molecular band arrives attenuated to a whisper — this is the most common outcome in real transmission spectroscopy, and the pipeline will not tell you what to conclude. Your task may be to file the most under-appreciated word in science. Do not log what you cannot measure above threshold. Extend integration if you must — but read the monitor carefully before you celebrate.',
+        sci: 'The cloud deck raises the photosphere above most of the atmosphere, crushing every feature toward the noise floor. Extend integration and a faint CH₄ emerges near 3.3 μm, with CO₂ — Rule C fires, a candidate. But the CO test at 4.6 μm stays buried, and without it you cannot separate a living methanogenic biosphere from Titan-style cold chemistry. The correct call is INCONCLUSIVE: not “nothing here”, but “this instrument cannot yet say”. Knowing the difference is the whole discipline. Next rotation: thermal phase curves, and a bigger telescope.'
+      },
+    ];
+    const RANKS = [ [ 0, 'STUDENT OBSERVER' ], [ 160, 'STAFF ASTRONOMER' ], [ 380, 'PRINCIPAL INVESTIGATOR' ], [ 640, 'MISSION DIRECTOR' ], [ 900, 'ARRAY DIRECTOR' ] ];
+    const rankOf = r => { let n = RANKS[ 0 ][ 1 ]; RANKS.forEach(([ t, x ]) => { if (r >= t) n = x; }); return n; };
+    const BADGES = [
+      { id: 'first', name: 'FIRST LIGHT', desc: 'Confirm your first spectral feature' },
+      { id: 'diseq', name: 'DISEQUILIBRIUM', desc: 'Rule A fired on your log — O₂/O₃ + CH₄' },
+      { id: 'skeptic', name: 'DEVIL\u2019S ADVOCATE', desc: 'Call the methane trap and the oxygen trap correctly' },
+      { id: 'clean', name: 'CLEAN REPORT', desc: 'A mission with zero false IDs and a correct verdict' },
+      { id: 'discipline', name: 'HONEST SILENCE', desc: 'File INCONCLUSIVE when the data truly cannot say' },
+      { id: 'surveyor', name: 'SURVEYOR', desc: 'File 10 Deep Field reports' },
+      { id: 'cartographer', name: 'CARTOGRAPHER', desc: 'Catalog all 10 molecular species' },
+      { id: 'all8', name: 'FULL SURVEY', desc: 'Complete all eight assigned missions' },
+      { id: 'pi', name: 'PRINCIPAL INVESTIGATOR', desc: 'Reach 380 career REP' },
+    ];
+    const HINTS = [
+      'LOGGING — click any dip in the spectrum to open the template matcher and log a feature.',
+      'MEASURING — click-drag horizontally across a band to measure its depth against the noise floor. Deep-and-significant, or noise?',
+      'TEMPLATES — hover a library row to project its band positions onto the spectrum. The strip below magnifies under your cursor — click it to pin.',
+      'NOISE — the shaded corridor is the 1σ pipeline error. Dips that escape it are real; dips inside it are noise. Toggle with C.',
+      'INSTRUMENT — extend integration (E) to cut noise; RESOLVE (R) splits blended bands like H₂O/CH₄ at 1.40 μm. Right-click a marker to delete it.',
+      'CLOUDS — some worlds hide behind decks that mute every band. When the corridor swallows everything, INCONCLUSIVE is a real answer.',
+      'VERDICT — pick a call (1/2/3), set your confidence, file the report (Enter). Conviction multiplies the stakes both ways.',
+    ];
+
+    /* ================= persistence ================= */
+    let S = { best: [], done: [], stats: { conf: 0, false: 0, right: 0, wrong: 0 }, survey: { count: 0, best: 0 }, catalog: {}, badges: {}, hinted: false, sound: true };
+    try
+    {
+      const raw = localStorage.getItem('firstlight_save'); if (raw)
+      {
+        const p = JSON.parse(raw);
+        S = { ...S, ...p }; S.stats = { conf: 0, false: 0, right: 0, wrong: 0, ...(p.stats || {}) };
+        S.survey = { count: 0, best: 0, ...(p.survey || {}) }; S.catalog = p.catalog || {}; S.badges = p.badges || {};
+      }
+    } catch (e) { }
+    while (S.best.length < MISSIONS.length) S.best.push(0);
+    while (S.done.length < MISSIONS.length) S.done.push(false);
+    const persist = () => { try { localStorage.setItem('firstlight_save', JSON.stringify(S)); } catch (e) { } };
+    const rep = () => S.best.reduce((a, b) => a + b, 0);
+    function award(id) { if (S.badges[ id ]) return; S.badges[ id ] = true; persist(); const b = BADGES.find(x => x.id === id); if (b) { toast('COMMENDATION — ' + b.name); sChime(); } }
+
+    /* ================= audio ================= */
+    const AU = {
+      ctx: null, dr: null,
+      ensure() { if (!this.ctx) { try { this.ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { } } if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume(); },
+      tone(f, d, type, g, dl, f2) { if (!S.sound || !this.ctx) return; const t0 = this.ctx.currentTime + (dl || 0); const o = this.ctx.createOscillator(), v = this.ctx.createGain(); o.type = type || 'sine'; o.frequency.setValueAtTime(f, t0); if (f2) o.frequency.linearRampToValueAtTime(f2, t0 + d); v.gain.setValueAtTime(0.0001, t0); v.gain.exponentialRampToValueAtTime(g || 0.06, t0 + 0.008); v.gain.exponentialRampToValueAtTime(0.0001, t0 + d); o.connect(v); v.connect(this.ctx.destination); o.start(t0); o.stop(t0 + d + 0.02); },
+      droneStart() {
+        if (!S.sound || !this.ctx || this.dr) return; const c = this.ctx; const g = c.createGain(); g.gain.setValueAtTime(0.0001, c.currentTime); g.gain.linearRampToValueAtTime(0.013, c.currentTime + 1.5); g.connect(c.destination);
+        const o1 = c.createOscillator(); o1.type = 'sine'; o1.frequency.value = 54; const g1 = c.createGain(); g1.gain.value = .7; o1.connect(g1); g1.connect(g);
+        const o2 = c.createOscillator(); o2.type = 'sine'; o2.frequency.value = 108.4; const g2 = c.createGain(); g2.gain.value = .3; o2.connect(g2); g2.connect(g);
+        o1.start(); o2.start(); this.dr = { g, o1, o2 };
+      },
+      droneStop() {
+        if (!this.dr) return; const { g, o1, o2 } = this.dr, c = this.ctx; try { g.gain.linearRampToValueAtTime(0.0001, c.currentTime + 0.4); } catch (e) { }
+        setTimeout(() => { try { o1.stop(); o2.stop(); g.disconnect(); } catch (e) { } }, 500); this.dr = null;
+      }
+    };
+    const sMark = () => AU.tone(1180, .06, 'sine', .045);
+    const sAssign = () => { AU.tone(740, .07, 'sine', .05); AU.tone(1108, .08, 'sine', .045, .06); };
+    const sDel = () => AU.tone(430, .06, 'sine', .045);
+    const sWin = () => [ 523, 659, 784, 1046 ].forEach((f, i) => AU.tone(f, .14, 'sine', .05, i * .09));
+    const sBad = () => { AU.tone(233, .2, 'triangle', .06); AU.tone(174, .3, 'triangle', .055, .13); };
+    const sChime = () => { AU.tone(880, .1, 'sine', .05); AU.tone(1320, .14, 'sine', .045, .09); };
+    const sGlitch = () => AU.tone(150, .05, 'square', .03);
+    const sSweep = (a, b) => AU.tone(a, .28, 'sine', .04, 0, b);
+
+    /* ================= state ================= */
+    let scr = 'title', missionIdx = 0, attempt = 0;
+    const SBX = { seed: 0, cur: null };
+    const A = {
+      m: null, seed: 0, sigma: 0, uses: 0, markers: [], verdict: 'inc', conf: 1, bands: null, nz: null, nz2: null,
+      highres: false, corridor: true, lastMeas: null, measDrag: null, glitch: null, nextGlitch: 0, glitchToasted: false, zoomPin: null
+    };
+    const mouse = { x: 0, y: 0, in: false };
+    let hoverMol = null, pmx = .5, pmy = .5;
+    const curMission = () => missionIdx === -1 ? SBX.cur : MISSIONS[ missionIdx ];
+
+    /* ================= physics ================= */
+    function effDepth(m, b) { return b.d * (1 - (m.cloud || 0) * Math.exp(-b.c / 0.9)) * (1 - (m.flatMute || 0)); }
+    function noiseArray(seed) {
+      const N = 4096, r = mulberry32(seed), a = new Float32Array(N);
+      for (let i = 0; i < N; i += 2)
+      {
+        const u = Math.max(r(), 1e-9), v = r(), m = Math.sqrt(-2 * Math.log(u));
+        a[ i ] = m * Math.cos(2 * Math.PI * v); if (i + 1 < N) a[ i + 1 ] = m * Math.sin(2 * Math.PI * v);
+      }
+      return a;
+    }
+    function noiseAt(nz, lam, div) {
+      const N = nz.length, f = clamp(Math.log(lam / WMIN) / LR * N / (div || 1), 0, N - 1.001);
+      const i = Math.floor(f), fr = f - i, a = nz[ i ], b = nz[ Math.min(N - 1, i + 1) ];
+      return a + (b - a) * fr;
+    }
+    function bandsFor(m) {
+      const arr = [];
+      STARS[ m.star ].lines.forEach(l => arr.push({ c: l[ 0 ], w: l[ 1 ], d: l[ 2 ], star: true }));
+      (m.artifacts || []).forEach(a => arr.push({ c: a.c, w: a.w, d: a.d, art: true, label: a.label }));
+      m.atmosphere.forEach(id => MOLS[ id ].bands.forEach(b => {
+        if (A.highres) arr.push({ c: b.hr ? b.hr.c : b.c, w: b.w * 0.42, d: effDepth(m, b), edge: !!b.edge });
+        else arr.push({ c: b.c, w: b.w, d: effDepth(m, b), edge: !!b.edge });
+      }));
+      return arr;
+    }
+    function calcT(lam, bands, haze) {
+      let t = 1 - (haze || 0) * Math.pow(0.45 / lam, 2.6);
+      if (t < 0.45) t = 0.45;
+      for (let k = 0; k < bands.length; k++)
+      {
+        const b = bands[ k ], z = (lam - b.c) / b.w;
+        if (b.edge) { const s = 1 / (1 + Math.exp(-z * 2.2)); t *= 1 - b.d * (1 - s); }
+        else if (Math.abs(z) < 4.2) { t *= 1 - b.d * Math.exp(-z * z); }
+      }
+      return Math.max(0.02, t);
+    }
+    const modelAt = lam => calcT(lam, A.bands, A.m.haze);
+    function sampleFlux(lam) {
+      return modelAt(lam) + A.sigma * (noiseAt(A.nz, lam) + 0.55 * noiseAt(A.nz2, lam, 14));
+    }
+    function glitchVal(lam, now) {
+      const g = A.glitch; if (!g) return 0;
+      const t = (now - g.t0) / g.dur;
+      if (t >= 1) { A.glitch = null; return 0; }
+      return g.amp * Math.sin(Math.PI * clamp(t, 0, 1)) * Math.exp(-Math.pow((lam - g.l0) / g.w, 2));
+    }
+    const fluxDraw = (lam, now) => sampleFlux(lam) + glitchVal(lam, now);
+
+    function rebuildFlux() {
+      const cv = el('specMain'), W = cv.clientWidth || 800;
+      A.bands = bandsFor(A.m);
+      A.nz = noiseArray(A.seed); A.nz2 = noiseArray(A.seed + 137);
+      const f = new Float32Array(W);
+      for (let x = 0; x < W; x++)f[ x ] = sampleFlux(x2w(x, W));
+      A.flux = f;
+      drawBase();
+    }
+    function plotGeom(W, H) { return { pl: 46, pr: W - 14, pt: 34, pb: H - 26 }; }
+    function drawGrid(ctx, g, W) {
+      ctx.font = '10px "IBM Plex Mono"'; ctx.textBaseline = 'middle';
+      for (let t = 0; t <= 1.001; t += 0.2)
+      {
+        const y = g.pt + (1 - t / TMAX) * (g.pb - g.pt);
+        ctx.strokeStyle = '#1a2028'; ctx.beginPath(); ctx.moveTo(g.pl, y); ctx.lineTo(g.pr, y); ctx.stroke();
+        ctx.fillStyle = '#5b6470'; ctx.textAlign = 'right'; ctx.fillText(String(Math.round(t * 100)), g.pl - 8, y);
+      }
+      ctx.textAlign = 'left'; ctx.fillText('%', g.pl - 38, g.pt - 14);
+      ctx.textAlign = 'center';
+      for (let i = 4; i <= 9; i++) { const x = w2x(i / 10, W); ctx.strokeStyle = '#141a21'; ctx.beginPath(); ctx.moveTo(x, g.pt); ctx.lineTo(x, g.pb); ctx.stroke(); }
+      [ 0.5, 1, 2, 3, 4, 5 ].forEach(l => {
+        const x = w2x(l, W);
+        ctx.strokeStyle = '#1e252e'; ctx.beginPath(); ctx.moveTo(x, g.pt); ctx.lineTo(x, g.pb); ctx.stroke();
+        ctx.fillStyle = '#5b6470'; ctx.fillText(l.toFixed(1), x, g.pb + 14);
+      });
+      ctx.fillStyle = '#5b6470'; ctx.textAlign = 'left'; ctx.font = '9px "IBM Plex Mono"';
+      ctx.fillText('μm', g.pr - 16, g.pb + 14);
+      ctx.textAlign = 'right'; ctx.font = '10px "IBM Plex Mono"';
+      ctx.fillText('TRANSMISSION', g.pr, g.pt - 14);
+    }
+    let baseCv = document.createElement('canvas');
+    function drawBase() {
+      const cv = el('specMain'), W = cv.clientWidth, H = cv.clientHeight;
+      const dpr = window.devicePixelRatio || 1;
+      baseCv.width = Math.max(1, Math.round(W * dpr)); baseCv.height = Math.max(1, Math.round(H * dpr));
+      const ctx = baseCv.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.fillStyle = '#0c0f14'; ctx.fillRect(0, 0, W, H);
+      const g = plotGeom(W, H);
+      drawGrid(ctx, g, W);
+      if (A.corridor && A.sigma > 0)
+      {
+        ctx.save(); ctx.beginPath(); ctx.rect(g.pl, g.pt, g.pr - g.pl, g.pb - g.pt); ctx.clip();
+        [ [ 1, .055 ], [ 2, .03 ] ].forEach(([ k, al ]) => {
+          ctx.beginPath();
+          for (let x = Math.floor(g.pl); x <= g.pr; x++) { const y = g.pt + (1 - clamp(modelAt(x2w(x, W)) + k * A.sigma, 0, TMAX) / TMAX) * (g.pb - g.pt); x === Math.floor(g.pl) ? ctx.moveTo(x, y) : ctx.lineTo(x, y); }
+          for (let x = g.pr; x >= g.pl; x--) { const y = g.pt + (1 - clamp(modelAt(x2w(x, W)) - k * A.sigma, 0, TMAX) / TMAX) * (g.pb - g.pt); ctx.lineTo(x, y); }
+          ctx.closePath(); ctx.fillStyle = 'rgba(236,231,218,' + al + ')'; ctx.fill();
+        });
+        ctx.restore();
+      }
+      ctx.save(); ctx.beginPath(); ctx.rect(g.pl, g.pt, g.pr - g.pl, g.pb - g.pt); ctx.clip();
+      ctx.beginPath(); ctx.moveTo(g.pl, g.pb);
+      for (let x = Math.floor(g.pl); x <= g.pr; x++)ctx.lineTo(x, g.pt + (1 - A.flux[ x ] / TMAX) * (g.pb - g.pt));
+      ctx.lineTo(g.pr, g.pb); ctx.closePath();
+      ctx.fillStyle = 'rgba(236,231,218,.06)'; ctx.fill();
+      ctx.beginPath();
+      for (let x = Math.floor(g.pl); x <= g.pr; x++) { const y = g.pt + (1 - A.flux[ x ] / TMAX) * (g.pb - g.pt); x === Math.floor(g.pl) ? ctx.moveTo(x, y) : ctx.lineTo(x, y); }
+      ctx.strokeStyle = '#ece7da'; ctx.lineWidth = 1.4; ctx.stroke(); ctx.lineWidth = 1;
+      ctx.restore();
+      ctx.strokeStyle = '#232a33'; ctx.strokeRect(g.pl + .5, g.pt + .5, g.pr - g.pl - 1, g.pb - g.pt - 1);
+    }
+    function measStats(x0, x1) {
+      const i0 = Math.round(clamp(Math.min(x0, x1), 0, A.flux.length - 1));
+      const i1 = Math.round(clamp(Math.max(x0, x1), 0, A.flux.length - 1));
+      if (i1 - i0 < 4) return null;
+      const seg = []; for (let i = i0; i <= i1; i++)seg.push(A.flux[ i ]);
+      const depth = pctl(seg, .88) - pctl(seg, .12);
+      return { depth, sig: depth / A.sigma };
+    }
+    function drawMain() {
+      const cv = el('specMain'), [ c, W, H ] = prep(cv);
+      c.drawImage(baseCv, 0, 0, baseCv.width, baseCv.height, 0, 0, W, H);
+      const g = plotGeom(W, H);
+      const now = performance.now();
+      if (A.highres) { c.font = '9px "IBM Plex Mono"'; c.fillStyle = 'rgba(232,163,61,.55)'; c.textAlign = 'left'; c.fillText('HIGH-RES', g.pl + 8, g.pt - 14); }
+      if (hoverMol)
+      {
+        c.setLineDash([ 3, 5 ]); c.strokeStyle = 'rgba(232,163,61,.30)';
+        MOLS[ hoverMol ].bands.forEach(b => { const x = w2x(b.c, W); c.beginPath(); c.moveTo(x, g.pt); c.lineTo(x, g.pb); c.stroke(); });
+        c.setLineDash([]);
+      }
+      const drawMeas = (x0, x1, st, live) => {
+        c.fillStyle = 'rgba(232,163,61,.08)'; c.fillRect(x0, g.pt, x1 - x0, g.pb - g.pt);
+        c.setLineDash([ 3, 4 ]); c.strokeStyle = 'rgba(232,163,61,.55)';
+        c.beginPath(); c.moveTo(x0, g.pt); c.lineTo(x0, g.pb); c.moveTo(x1, g.pt); c.lineTo(x1, g.pb); c.stroke(); c.setLineDash([]);
+        if (st)
+        {
+          const good = st.sig >= 3;
+          const line = 'Δ ' + (st.depth * 100).toFixed(2) + '% ± ' + (A.sigma * 100).toFixed(2) + ' · ' + st.sig.toFixed(1) + 'σ' + (live ? ' …' : (good ? ' — SIG' : ' — <3σ'));
+          c.font = '10px "IBM Plex Mono"'; const tw = c.measureText(line).width + 14;
+          const cx = clamp((x0 + x1) / 2, g.pl + tw / 2, g.pr - tw / 2);
+          rr(c, cx - tw / 2, g.pt + 4, tw, 17, 3); c.fillStyle = 'rgba(10,13,17,.9)'; c.fill();
+          c.strokeStyle = good ? '#79c98d' : '#e8a33d'; c.stroke();
+          c.fillStyle = good ? '#79c98d' : '#ffc46b'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(line, cx, g.pt + 13); c.textBaseline = 'alphabetic';
+        }
+      };
+      if (A.measDrag) drawMeas(A.measDrag.x0, A.measDrag.x1, measStats(A.measDrag.x0, A.measDrag.x1), true);
+      else if (A.lastMeas) drawMeas(A.lastMeas.x0, A.lastMeas.x1, { depth: A.lastMeas.depth, sig: A.lastMeas.sig }, false);
+      const rows = [ { x: -9999 }, { x: -9999 } ];
+      [ ...A.markers ].sort((a, b) => a.lam - b.lam).forEach(mk => {
+        const x = w2x(mk.lam, W), sym = MOLS[ mk.mol ].sym, txt = sym + ' ' + mk.lam.toFixed(2);
+        c.font = '10px "IBM Plex Mono"';
+        const tw = c.measureText(txt).width + 16;
+        const r = (x - rows[ 0 ].x > tw + 8) ? 0 : 1;
+        rows[ r ] = { x: x + tw / 2 };
+        const cy = 5 + r * 17, cx = clamp(x, g.pl + tw / 2, g.pr - tw / 2);
+        c.strokeStyle = 'rgba(232,163,61,.16)'; c.beginPath(); c.moveTo(x, g.pt + 42); c.lineTo(x, g.pb); c.stroke();
+        c.fillStyle = '#e8a33d'; c.beginPath(); c.moveTo(x - 4, cy + 20); c.lineTo(x + 4, cy + 20); c.lineTo(x, cy + 27); c.closePath(); c.fill();
+        rr(c, cx - tw / 2, cy, tw, 15, 3); c.fillStyle = '#141a21'; c.fill(); c.strokeStyle = MOLS[ mk.mol ].color; c.stroke();
+        c.fillStyle = '#d8d4c8'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(txt, cx, cy + 8);
+      });
+      c.textBaseline = 'alphabetic';
+      if (mouse.in && mouse.x >= g.pl && mouse.x <= g.pr)
+      {
+        const lam = x2w(mouse.x, W), t = clamp(fluxDraw(lam, now), 0, TMAX), y = g.pt + (1 - t / TMAX) * (g.pb - g.pt);
+        c.strokeStyle = 'rgba(255,255,255,.14)'; c.beginPath(); c.moveTo(mouse.x, g.pt); c.lineTo(mouse.x, g.pb); c.stroke();
+        c.fillStyle = '#e8a33d'; c.beginPath(); c.arc(mouse.x, y, 2.6, 0, 7); c.fill();
+        let hint = '', best = 1e9, bid = null, bc = 0;
+        LIB_ORDER.forEach(id => MOLS[ id ].bands.forEach(b => { const d = Math.abs(b.c - lam); if (d < best) { best = d; bid = id; bc = b.c; } }));
+        if (best < 0.02) hint = '   ≈ ' + MOLS[ bid ].sym + ' ' + bc.toFixed(2) + ' μm';
+        const line = 'λ ' + lam.toFixed(3) + ' μm   T ' + (t * 100).toFixed(1) + ' %' + hint;
+        c.font = '10.5px "IBM Plex Mono"'; const w = c.measureText(line).width + 16;
+        rr(c, g.pl + 8, g.pb - 26, w, 19, 3); c.fillStyle = 'rgba(10,13,17,.88)'; c.fill(); c.strokeStyle = '#2a323c'; c.stroke();
+        c.fillStyle = hint ? '#ffc46b' : '#b8bec6'; c.textAlign = 'left'; c.fillText(line, g.pl + 16, g.pb - 16);
+      }
+    }
+    function drawZoom() {
+      const cv = el('specZoom'), [ c, W, H ] = prep(cv);
+      c.fillStyle = '#0c0f14'; c.fillRect(0, 0, W, H);
+      c.strokeStyle = '#232a33'; c.strokeRect(.5, .5, W - 1, H - 1);
+      c.font = '9.5px "IBM Plex Mono"'; c.textBaseline = 'middle';
+      if (!mouse.in && !A.zoomPin) { c.fillStyle = '#4a525d'; c.textAlign = 'center'; c.fillText('MAGNIFIER — HOVER THE SPECTRUM · CLICK TO PIN', W / 2, H / 2); c.textBaseline = 'alphabetic'; return; }
+      const lamC = A.zoomPin !== null ? A.zoomPin : x2w(clamp(mouse.x, 0, W), W);
+      const hw = Math.max(0.05, lamC * 0.10);
+      const z2y = t => 8 + (1 - clamp(t, 0, TMAX) / TMAX) * (H - 16);
+      c.save(); c.beginPath(); c.rect(1, 1, W - 2, H - 2); c.clip();
+      const now = performance.now();
+      c.beginPath(); c.moveTo(0, H);
+      for (let x = 0; x <= W; x += 1)c.lineTo(x, z2y(fluxDraw(lamC - hw + 2 * hw * x / W, now)));
+      c.lineTo(W, H); c.closePath(); c.fillStyle = 'rgba(236,231,218,.06)'; c.fill();
+      c.beginPath();
+      for (let x = 0; x <= W; x += 1) { const y = z2y(fluxDraw(lamC - hw + 2 * hw * x / W, now)); x === 0 ? c.moveTo(x, y) : c.lineTo(x, y); }
+      c.strokeStyle = '#ece7da'; c.lineWidth = 1.3; c.stroke(); c.lineWidth = 1;
+      if (hoverMol) { c.strokeStyle = 'rgba(232,163,61,.45)'; MOLS[ hoverMol ].bands.forEach(b => { if (Math.abs(b.c - lamC) < hw) { const x = (b.c - (lamC - hw)) / (2 * hw) * W; c.beginPath(); c.moveTo(x, H - 4); c.lineTo(x, H - 12); c.stroke(); } }); }
+      A.markers.forEach(mk => { if (Math.abs(mk.lam - lamC) < hw) { const x = (mk.lam - (lamC - hw)) / (2 * hw) * W; c.strokeStyle = 'rgba(232,163,61,.5)'; c.beginPath(); c.moveTo(x, 4); c.lineTo(x, H - 4); c.stroke(); } });
+      c.strokeStyle = '#e8a33d'; c.beginPath(); c.moveTo(W / 2, 3); c.lineTo(W / 2, H - 3); c.stroke();
+      const zf = Math.log((lamC + hw) / (lamC - hw));
+      c.textAlign = 'right'; c.fillStyle = '#5b6470';
+      c.fillText('×' + (LR / zf).toFixed(1) + ' · ' + lamC.toFixed(3) + ' μm', W - 8, 12);
+      if (A.zoomPin !== null) { c.fillStyle = '#ffc46b'; c.fillText('⦿ PINNED — CLICK TO RELEASE', W - 8, 26); }
+      c.restore(); c.textBaseline = 'alphabetic';
+    }
+
+    /* ================= library ================= */
+    function buildLibrary() {
+      const box = el('libList'); box.innerHTML = '';
+      LIB_ORDER.forEach(id => {
+        const m = MOLS[ id ];
+        const row = document.createElement('div'); row.className = 'lib-row';
+        row.innerHTML = '<span class="dot" style="background:' + m.color + '"></span>' +
+          '<div class="lib-txt"><b>' + m.sym + '</b><em>' + m.name + '</em><small>' + m.bands.map(b => b.c.toFixed(2)).join(' · ') + ' μm</small></div>' +
+          '<canvas class="spark"></canvas>';
+        box.appendChild(row);
+        const cv = row.querySelector('canvas');
+        requestAnimationFrame(() => {
+          const [ ctx, W ] = prep(cv);
+          ctx.strokeStyle = '#252d36'; ctx.beginPath(); ctx.moveTo(0, 2.5); ctx.lineTo(W, 2.5); ctx.stroke();
+          ctx.beginPath();
+          for (let x = 0; x <= W; x++) { const lam = x2w(x, W), t = calcT(lam, m.bands, 0); const y = 2 + clamp(1 - t, 0, 0.9) * 24; x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y); }
+          ctx.strokeStyle = m.color; ctx.lineWidth = 1.2; ctx.stroke(); ctx.lineWidth = 1;
+        });
+        row.addEventListener('mouseenter', () => { hoverMol = id; });
+        row.addEventListener('mouseleave', () => { if (hoverMol === id) hoverMol = null; });
+      });
+    }
+
+    /* ================= popover / logging ================= */
+    function closePopover() { el('popover').style.display = 'none'; }
+    function openPopover(px, py, lam, existing) {
+      const pop = el('popover'), list = el('popList'), head = el('popHead');
+      list.innerHTML = '';
+      if (existing)
+      {
+        const m = MOLS[ existing.mol ];
+        head.innerHTML = m.sym + ' · <b>' + existing.lam.toFixed(2) + ' μm</b> — logged feature';
+        const btn = document.createElement('button'); btn.className = 'pop-opt';
+        btn.innerHTML = '<i style="background:' + m.color + '"></i>Remove marker<span>−</span>';
+        btn.onclick = () => { A.markers.splice(A.markers.indexOf(existing), 1); sDel(); closePopover(); refreshLog(); };
+        list.appendChild(btn);
+      } else
+      {
+        head.innerHTML = 'λ <b>' + lam.toFixed(3) + ' μm</b> — match to template band:';
+        const cands = [];
+        LIB_ORDER.forEach(id => MOLS[ id ].bands.forEach(b => {
+          if (Math.abs(b.c - lam) < Math.max(0.016, b.w * 1.8)) cands.push({ id, b });
+        }));
+        if (!cands.length)
+        {
+          const d = document.createElement('div'); d.className = 'pop-note';
+          d.textContent = 'No molecular template matches here. This dip is likely a stellar line, a systematic, or noise — discard it.';
+          list.appendChild(d);
+        } else
+        {
+          cands.forEach(cd => {
+            const m = MOLS[ cd.id ];
+            const ed = A.m ? effDepth(A.m, cd.b) : cd.b.d;
+            const q = ed > 0.4 ? 'strong' : ed > 0.2 ? 'moderate' : ed > 0.08 ? 'weak' : 'trace';
+            const btn = document.createElement('button'); btn.className = 'pop-opt';
+            btn.innerHTML = '<i style="background:' + m.color + '"></i>' + m.sym + '<span>' + cd.b.c.toFixed(2) + ' · ' + q + '</span>';
+            btn.onclick = () => {
+              if (A.markers.some(mk => mk.mol === cd.id && Math.abs(mk.lam - cd.b.c) < 1e-6)) { toast('Already logged: ' + m.sym + ' ' + cd.b.c.toFixed(2) + ' μm'); closePopover(); return; }
+              if (A.markers.length >= 28) { toast('Observing log full — clear some entries.'); closePopover(); return; }
+              A.markers.push({ lam: cd.b.c, mol: cd.id }); sAssign(); closePopover(); refreshLog();
+            };
+            list.appendChild(btn);
+          });
+        }
+      }
+      pop.style.display = 'block';
+      const r = pop.getBoundingClientRect();
+      pop.style.left = clamp(px + 14, 8, window.innerWidth - r.width - 10) + 'px';
+      pop.style.top = clamp(py + 10, 8, window.innerHeight - r.height - 10) + 'px';
+    }
+    function measDepthAt(cW, c, hw) {
+      const W = el('specMain').clientWidth;
+      const i0 = Math.round(clamp(w2x(c - hw, W), 0, W - 1)), i1 = Math.round(clamp(w2x(c + hw, W), 0, W - 1));
+      if (i1 - i0 < 4) return 0;
+      const seg = []; for (let i = i0; i <= i1; i++)seg.push(A.flux[ i ]);
+      return pctl(seg, .88) - pctl(seg, .12);
+    }
+    function renderAtmo() {
+      const box = el('atmoList');
+      if (!A.markers.length) { box.innerHTML = '<div class="mon-empty">log features to build a rough atmospheric model</div>'; return; }
+      const agg = {};
+      A.markers.forEach(mk => {
+        const m = MOLS[ mk.mol ];
+        const b = m.bands.find(bb => Math.abs(bb.c - mk.lam) < Math.max(.016, bb.w * 1.8)) || m.bands[ 0 ];
+        const d = measDepthAt(0, b.c, Math.max(b.w * 2.2, 0.03));
+        agg[ mk.mol ] = Math.max(agg[ mk.mol ] || 0, d);
+      });
+      box.innerHTML = '';
+      Object.entries(agg).sort((a, b) => b[ 1 ] - a[ 1 ]).forEach(([ id, d ]) => {
+        const m = MOLS[ id ];
+        const tag = d < A.sigma * 2.6 ? 'TRACE' : d < 0.12 ? 'WEAK' : d < 0.32 ? 'MODERATE' : 'STRONG';
+        const pct = Math.round(clamp(d / 0.45, 0.05, 1) * 100);
+        const row = document.createElement('div'); row.className = 'a-row';
+        row.innerHTML = '<b style="color:' + m.color + '">' + m.sym + '</b>' +
+          '<div class="a-bar"><i style="width:' + pct + '%;background:' + m.color + '"></i></div>' +
+          '<span class="a-tag">' + tag + '</span>';
+        box.appendChild(row);
+      });
+    }
+    function refreshLog() {
+      el('featCount').textContent = A.markers.length;
+      el('fbHint').style.display = A.markers.length ? 'none' : '';
+      const box = el('featChips'); box.innerHTML = '';
+      [ ...A.markers ].sort((a, b) => a.lam - b.lam).forEach(mk => {
+        const m = MOLS[ mk.mol ];
+        const chip = document.createElement('span'); chip.className = 'f-chip';
+        chip.style.borderColor = m.color; chip.title = 'Click to pin the magnifier here';
+        chip.innerHTML = '<i style="background:' + m.color + '"></i>' + m.sym + '<span>' + mk.lam.toFixed(2) + '</span>' +
+          '<svg viewBox="0 0 24 24"><path d="M5 5l14 14M19 5L5 19"/></svg>';
+        chip.onclick = e => {
+          if (e.target.tagName === 'SVG') { A.markers.splice(A.markers.indexOf(mk), 1); sDel(); refreshLog(); return; }
+          A.zoomPin = mk.lam; sMark();
+        };
+        box.appendChild(chip);
+      });
+      updateRules(); renderAtmo();
+    }
+    function updateRules() {
+      const set = new Set(A.markers.map(m => m.mol));
+      const has = id => set.has(id);
+      const ox = has('O2') || has('O3');
+      const lines = [];
+      if (ox && has('CH4')) lines.push([ 'rA', 'RULE A', 'O₂/O₃ + CH₄ — disequilibrium pair · STRONG BIOSIGNATURE' ]);
+      if (ox && has('H2O')) lines.push([ 'rB', 'RULE B', 'O₂/O₃ + H₂O — oxidizing, wet atmosphere · CANDIDATE' ]);
+      if (has('CH4') && has('CO2') && !has('CO')) lines.push([ 'rC', 'RULE C', 'CH₄ + CO₂, no CO — methane disequilibrium · CANDIDATE' ]);
+      if (has('N2O') && has('H2O') && !has('CO')) lines.push([ 'rE', 'RULE E', 'N₂O + H₂O, no CO — biological nitrogen cycle · CANDIDATE' ]);
+      if (ox && !has('CH4') && (has('CO') || has('O4'))) lines.push([ 'rD', 'RULE D', 'O₂ without CH₄, with CO/O₄ — abiotic oxygen regime' ]);
+      const mon = el('ruleMon'); mon.innerHTML = '';
+      if (!lines.length) { mon.innerHTML = '<div class="mon-empty">no rules triggered — log features to evaluate</div>'; return; }
+      lines.forEach(l => {
+        const d = document.createElement('div'); d.className = 'rule ' + l[ 0 ];
+        d.innerHTML = '<b>' + l[ 1 ] + '</b>' + l[ 2 ]; mon.appendChild(d);
+      });
+      if (lines[ 0 ][ 0 ] === 'rA' && !updateRules.firedA) { updateRules.firedA = true; toast('Disequilibrium pair detected — O₂/O₃ + CH₄'); sChime(); award('diseq'); }
+    }
+
+    /* ================= analysis lifecycle ================= */
+    function enterAnalysis() {
+      const m = curMission();
+      A.m = m; A.uses = 0; A.markers = []; A.verdict = 'inc'; A.conf = 1; A.highres = false;
+      A.lastMeas = null; A.measDrag = null; A.glitch = null; A.glitchToasted = false; A.zoomPin = null;
+      A.nextGlitch = performance.now() + 7000 + Math.random() * 8000;
+      updateRules.firedA = false;
+      const base = missionIdx === -1 ? SBX.seed : 4177 * (missionIdx + 1);
+      A.seed = base + 131 * attempt;
+      A.sigma = 1 / (m.snr * Math.SQRT2);
+      document.querySelectorAll('.v-opt').forEach(v => v.classList.toggle('sel', v.dataset.v === 'inc'));
+      document.querySelectorAll('.conf-seg button').forEach(b => b.classList.toggle('sel', b.dataset.c === '1'));
+      refreshLog();
+      el('measChip').classList.add('hidden');
+      el('shCode').textContent = m.code; el('shName').textContent = m.target; el('shKind').textContent = m.kind;
+      el('shRes').textContent = 'TRANSMISSION SPECTRUM · ' + (m.cloud > 0.2 ? 'CLOUDED · ' : '') + (m.haze > 0.2 ? 'LOW RES · ' : 'R≈70 · ') + '0.38–5.0 μm · LOG λ';
+      updateInst();
+      requestAnimationFrame(() => rebuildFlux());
+    }
+    function updateInst() {
+      el('instInt').textContent = (3.2 + 6 * A.uses).toFixed(1) + ' h';
+      el('instSnr').textContent = 'SNR ' + Math.round(A.m.snr * Math.pow(Math.SQRT2, A.uses));
+      const bx = el('btnExtend');
+      if (A.uses >= 2) { bx.disabled = true; bx.textContent = 'MAX'; }
+      else { bx.disabled = false; bx.textContent = '+6 h (' + (2 - A.uses) + ' LEFT)'; }
+      const br = el('btnResolve');
+      if (A.highres) { br.disabled = true; br.textContent = 'RESOLVED'; el('shRes').textContent = 'TRANSMISSION SPECTRUM · R≈280 · 0.38–5.0 μm · LOG λ'; }
+      else { br.disabled = false; br.textContent = 'RESOLVE ×4 (1)'; }
+      el('btnCorr').classList.toggle('active', A.corridor);
+    }
+    el('btnExtend').addEventListener('click', () => {
+      if (A.uses >= 2) return;
+      AU.ensure(); A.uses++; A.sigma = 1 / (A.m.snr * Math.pow(Math.SQRT2, A.uses));
+      rebuildFlux(); updateInst(); sSweep(420, 900);
+      toast('Integration extended — noise reduced.');
+    });
+    el('btnResolve').addEventListener('click', () => {
+      if (A.highres) return;
+      AU.ensure(); A.highres = true; A.sigma *= 1.15;
+      rebuildFlux(); updateInst(); sSweep(500, 1400);
+      toast('High-resolution mode — blended bands split; per-pixel noise rises slightly.');
+    });
+    el('btnCorr').addEventListener('click', () => { A.corridor = !A.corridor; updateInst(); drawBase(); sMark(); });
+    el('btnClear').addEventListener('click', () => { if (!A.markers.length) return; A.markers = []; sDel(); refreshLog(); });
+
+    document.querySelectorAll('.v-opt').forEach(v => v.addEventListener('click', () => {
+      document.querySelectorAll('.v-opt').forEach(x => x.classList.remove('sel'));
+      v.classList.add('sel'); A.verdict = v.dataset.v; sMark(); v.blur();
+    }));
+    document.querySelectorAll('.conf-seg button').forEach(b => b.addEventListener('click', () => {
+      document.querySelectorAll('.conf-seg button').forEach(x => x.classList.remove('sel'));
+      b.classList.add('sel'); A.conf = parseFloat(b.dataset.c); sMark(); b.blur();
+    }));
+
+    /* ---------- pointer: click-to-log vs drag-to-measure ---------- */
+    const specBox = el('specBox'), specMain = el('specMain');
+    let pdown = null;
+    specMain.addEventListener('pointermove', e => {
+      mouse.x = e.offsetX; mouse.y = e.offsetY; mouse.in = true;
+      if (pdown)
+      {
+        if (Math.hypot(e.offsetX - pdown.x, e.offsetY - pdown.y) > 6) pdown.moved = true;
+        if (pdown.moved)
+        {
+          specBox.classList.add('measuring');
+          A.measDrag = { x0: pdown.x, x1: clamp(e.offsetX, 0, specMain.clientWidth) };
+        }
+      }
+    });
+    specMain.addEventListener('pointerleave', () => { mouse.in = false; });
+    specMain.addEventListener('pointerdown', e => {
+      closePopover(); AU.ensure();
+      pdown = { x: e.offsetX, y: e.offsetY, t: performance.now(), moved: false };
+      try { specMain.setPointerCapture(e.pointerId); } catch (err) { }
+    });
+    specMain.addEventListener('pointerup', e => {
+      if (!pdown) return;
+      specBox.classList.remove('measuring');
+      if (pdown.moved) finishMeasure(pdown.x, e.offsetX);
+      else handleClick(e);
+      pdown = null; A.measDrag = null;
+    });
+    specMain.addEventListener('contextmenu', e => {
+      e.preventDefault();
+      const W = specMain.clientWidth, x = e.offsetX;
+      const i = A.markers.findIndex(mk => Math.abs(w2x(mk.lam, W) - x) < 8);
+      if (i >= 0) { A.markers.splice(i, 1); sDel(); refreshLog(); toast('Marker removed.'); }
+    });
+    function handleClick(e) {
+      const W = specMain.clientWidth, H = specMain.clientHeight, g = plotGeom(W, H);
+      if (e.offsetX < g.pl || e.offsetX > g.pr || e.offsetY < g.pt || e.offsetY > g.pb) return;
+      const lam = x2w(e.offsetX, W);
+      const ex = A.markers.find(mk => Math.abs(w2x(mk.lam, W) - e.offsetX) < 8);
+      openPopover(e.clientX, e.clientY, lam, ex || null);
+      if (!ex) sMark();
+    }
+    function finishMeasure(x0, x1) {
+      const W = specMain.clientWidth, g = plotGeom(W, specMain.clientHeight);
+      x0 = clamp(Math.min(x0, x1), g.pl, g.pr); x1 = clamp(Math.max(x0, x1), g.pl, g.pr);
+      if (x1 - x0 < 10) { toast('Drag a wider window to measure a band.'); return; }
+      const st = measStats(x0, x1);
+      if (!st) return;
+      A.lastMeas = { x0, x1, depth: st.depth, sig: st.sig };
+      sAssign();
+      const chip = el('measChip'); chip.classList.remove('hidden');
+      const good = st.sig >= 3;
+      chip.className = good ? 'ok' : 'low';
+      chip.textContent = 'Δ ' + (st.depth * 100).toFixed(2) + ' % ± ' + (A.sigma * 100).toFixed(2) + ' · ' + st.sig.toFixed(1) + 'σ — ' + (good ? 'SIGNIFICANT' : 'BELOW 3σ');
+      if (good && st.sig >= 6) toast('Band measured at ' + st.sig.toFixed(1) + 'σ — well above the detection corridor.');
+    }
+    el('specZoom').addEventListener('click', () => {
+      if (scr !== 'analysis') return;
+      AU.ensure();
+      if (A.zoomPin !== null) { A.zoomPin = null; sDel(); }
+      else
+      {
+        const lamC = mouse.in ? x2w(clamp(mouse.x, 0, specMain.clientWidth), specMain.clientWidth) : 1.5;
+        A.zoomPin = lamC; sMark(); toast('Magnifier pinned at ' + lamC.toFixed(3) + ' μm.');
+      }
+    });
+
+    document.addEventListener('click', e => {
+      const pop = el('popover');
+      if (pop.style.display === 'block' && !pop.contains(e.target) && e.target.id !== 'specMain') closePopover();
+    });
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') { closePopover(); el('modalHb').classList.remove('open'); return; }
+      if (el('modalHb').classList.contains('open')) return;
+      if (scr !== 'analysis') return;
+      const k = e.key.toLowerCase();
+      if (k === 'e') el('btnExtend').click();
+      else if (k === 'r') el('btnResolve').click();
+      else if (k === 'c') el('btnCorr').click();
+      else if (k === '1' || k === '2' || k === '3')
+      {
+        const v = [ 'abiotic', 'inc', 'bio' ][ +k - 1 ];
+        document.querySelector('.v-opt[data-v="' + v + '"]').click();
+      }
+      else if (e.key === 'Enter') { e.preventDefault(); el('submitBtn').click(); }
+    });
+
+    /* ================= deep field generator ================= */
+    const ARCH = {
+      furnace: {
+        kind: 'FURNACE GIANT', atm: [ 'H2O', 'CO2', 'CO' ], so2: .5, life: false,
+        notes: m => 'A ' + m.radius.toFixed(1) + ' R⊕ giant baking at ' + m.teq + ' K. The pipeline expects equilibrium chemistry — H₂O, CO₂, CO — and possibly photochemical SO₂ near 4.05 μm. A calibration-grade signal: practice measuring before believing.',
+        sci: 'At these temperatures equilibrium chemistry writes the whole spectrum: H₂O, CO₂, CO cooked by heat alone. If SO₂ shows at 4.05 μm it is photochemistry, not biology — the same species JWST found on WASP-39b. Nothing here is out of equilibrium; nothing here is alive.'
+      },
+      warmgiant: {
+        kind: 'TEMPERATE GIANT', atm: [ 'H2O', 'CH4' ], co2: .5, life: false,
+        notes: m => 'A temperate ' + m.radius.toFixed(1) + ' R⊕ giant at ' + m.teq + ' K. Envelope models split between water-rich and methane-rich. Log only what escapes the corridor, and let the bands argue among themselves.',
+        sci: 'A cold giant runs reducing chemistry: CH₄ over H₂O, perhaps CO₂, all from accreted ices and vertical mixing. Giants have no surface and no biology — this is a weather report, not a biography. File it and move on.'
+      },
+      titan: {
+        kind: 'SMOG SUB-NEPTUNE', atm: [ 'CH4', 'CO' ], life: false,
+        notes: m => 'A ' + m.teq + ' K sub-Neptune wrapped in photochemical smog. The methane signature will be enormous. So was Titan\u2019s — and nobody ever accused Titan of photosynthesis.',
+        sci: 'Methane is a reduced gas that survives eons when nothing oxidizes it. With no O₂, no O₃ and no CO₂ disequilibrium, this is cold-chemistry smog — the Titan solution. Watch your rule monitor stay silent: no rule fires on methane alone. Silence is information too.'
+      },
+      steam: {
+        kind: 'STEAM SUB-NEPTUNE', atm: [ 'H2O', 'CO2' ], life: false,
+        notes: m => 'A ' + m.radius.toFixed(1) + ' R⊕ sub-Neptune whose envelope is mostly steam over a possible steam-ocean interface. Chemistry, not biology, is the working hypothesis. Verify nothing is hiding in the corridor.',
+        sci: 'A steam envelope over a high-pressure ice or magma layer explains H₂O and CO₂ without any disequilibrium. Sub-Neptunes are the galaxy\u2019s most common planet and its most common disappointment: big spectra, quiet chemistry. File ABIOTIC.'
+      },
+      ocean: {
+        kind: 'OCEAN WORLD CANDIDATE', atm: [ 'H2O', 'CO2', 'O2' ], o3: .5, ch4: .35, life: true,
+        notes: m => 'An ocean world at ' + m.teq + ' K in the habitable zone. Survey models permit anything from sterile brine to a living sea. The 0.76 μm region decides it — measure, do not assume.',
+        sci: 'Free O₂ on a wet, temperate world is out of chemical equilibrium — something refills it against oxidation, and on Earth that something is photosynthesis. Check the negatives too: no CO strengthens the case, and O₃ at 0.6 μm is oxygen\u2019s shadow. Context is the instrument.'
+      },
+      archean: {
+        kind: 'REDUCED BIOSPHERE CANDIDATE', atm: [ 'H2O', 'CH4', 'CO2' ], n2o: .3, life: true,
+        notes: m => 'A hazy, reduced world at ' + m.teq + ' K — think Archean Earth: CH₄ over a CO₂–H₂O sky, no oxygen expected. The biological signal is a gas leak, and leaks are faint.',
+        sci: 'No oxygen, and yet alive — Archean Earth, three billion years ago. Methanogens exhaling CH₄ into a CO₂–H₂O atmosphere: Rule C, methane disequilibrium. If N₂O appears at 4.5 μm, a microbial nitrogen cycle strengthens the case. Remember the CO test: methane with abundant CO is geochemistry, not biology.'
+      },
+      home: {
+        kind: 'EARTH TWIN CANDIDATE', atm: [ 'H2O', 'O2', 'O3', 'CH4', 'CO2', 'N2O', 'VRE' ], life: true,
+        notes: m => 'No survey designation — just coordinates and a ' + STAR_CLS[ m.star ] + ' star at ' + m.teq + ' K. Be patient with the 4.5 μm region and the 0.7 μm step. Whatever you find, remember why the array was built.',
+        sci: 'O₂ and CH₄ coexisting — Rule A, the disequilibrium puzzle. O₃ shadowing the oxygen, N₂O from soil microbes, H₂O oceans, a green step at 0.70 μm where continents harvest starlight. Every rule fires at once, because the rules were written backwards from spectra like this one. This is what we are looking for.'
+      },
+      sterile: {
+        kind: 'QUIET TERRESTRIAL', atm: [ 'H2O', 'CO2' ], co: .55, life: false,
+        notes: m => 'A temperate rock at ' + m.teq + ' K with an unremarkable atmosphere. Sometimes the answer is simply: nothing interesting. Do not invent signal to have something to report.',
+        sci: 'H₂O and CO₂ with a trace of CO — volcanic outgassing over a dead surface, in perfect equilibrium. No O₂, no CH₄, no N₂O, no O₃: the rule monitor never fires. Most habitable-zone planets are exactly this. The discipline is calling it honestly.'
+      },
+      runaway: {
+        kind: 'POST-RUNAWAY REMNANT', atm: [ 'O2', 'O4', 'CO2', 'CO' ], life: false,
+        notes: m => 'A desiccated remnant at ' + m.teq + ' K. Theory allows enormous abiotic O₂ here as oceans boil away and hydrogen escapes. The pipeline flagged the O₂ column. Verify before celebrating.',
+        sci: 'The false positive you were warned about: hydrogen escapes, leftover O₂ accumulates with nothing to consume it. No CH₄, and critically no H₂O — the water is gone. The O₄ pair only forms under crushing oxygen pressure no biosphere produces. CO and CO₂ complete a sterile volcanic mix. Rule D. Oxygen is a biosignature only in context.'
+      },
+    };
+    function genMission(seed) {
+      const r = mulberry32(seed);
+      const st = [ 'G', 'G', 'K', 'K', 'K', 'M', 'M' ][ Math.floor(r() * 7) ];
+      const roll = r();
+      let arch, rad, teq, life;
+      if (roll < .22) { arch = r() < .55 ? 'furnace' : 'warmgiant'; rad = 6 + r() * 8; teq = arch === 'furnace' ? 800 + ~~(r() * 700) : 250 + ~~(r() * 250); life = false; }
+      else if (roll < .45) { arch = r() < .5 ? 'titan' : 'steam'; rad = 1.8 + r() * 1.4; teq = 150 + ~~(r() * 180); life = false; }
+      else
+      {
+        rad = 0.95 + r() * 0.75; teq = 205 + ~~(r() * 120); life = r() < .5;
+        if (life) arch = rad < 1.35 && r() < .25 ? 'home' : (r() < .5 ? 'ocean' : 'archean');
+        else arch = r() < .4 && teq > 295 ? 'runaway' : 'sterile';
+      }
+      const a = { ...ARCH[ arch ] };
+      const atmosphere = [ ...a.atm ];
+      [ 'so2', 'co2', 'o3', 'ch4', 'n2o' ].forEach(k => {
+        if (a[ k ] && r() < a[ k ])
+        {
+          const add = { so2: 'SO2', co2: 'CO2', o3: 'O3', ch4: 'CH4', n2o: 'N2O' }[ k ];
+          if (!atmosphere.includes(add)) atmosphere.push(add);
+        }
+      });
+      if (arch === 'warmgiant' && a.co2 && r() < a.co2 && !atmosphere.includes('CO2')) atmosphere.push('CO2');
+      if (arch === 'sterile' && a.co && r() < a.co && !atmosphere.includes('CO')) atmosphere.push('CO');
+      if (atmosphere.includes('CH4') && !atmosphere.includes('CO2') && atmosphere.includes('CO')) {/*titan-style, fine*/ }
+      let snr = 18 + ~~(r() * 46); if (life) snr = Math.max(snr, 26);
+      let haze = r() < .3 ? +(0.08 + r() * 0.3).toFixed(2) : 0;
+      let cloud = r() < .22 ? +(0.35 + r() * 0.4).toFixed(2) : 0;
+      let flatMute = (!life && r() < .12) ? 0.75 : 0;
+      const artifacts = r() < .15 ? [ { c: [ 0.60, 0.66, 0.52 ][ Math.floor(r() * 3) ], w: 0.05, d: +(0.07 + r() * 0.05).toFixed(3), label: 'unocculted starspot — transit light source effect' } ] : [];
+      // ensure a life-world has at least one detectable band
+      if (life)
+      {
+        const thr = 2.6 / (snr * Math.SQRT2);
+        let best = 0;
+        atmosphere.forEach(id => MOLS[ id ].bands.forEach(b => { best = Math.max(best, effDepth({ cloud, flatMute }, b)); }));
+        while (best < thr && snr < 80) { snr += 6; best = best * 1.12; } // approximate; corridor narrows
+      }
+      const name = 'ARG-' + String.fromCharCode(65 + ~~(r() * 26)) + String.fromCharCode(65 + ~~(r() * 26)) + '-' + (100 + ~~(r() * 900)) + (r() < .5 ? ' b' : r() < .5 ? ' c' : ' d');
+      const flags = [];
+      if (haze) flags.push('HAZE'); if (cloud) flags.push('CLOUD DECK'); if (flatMute) flags.push('SUPPRESSED BANDS');
+      if (artifacts.length) flags.push('STELLAR CONTAMINATION'); if (snr < 24) flags.push('LOW SNR');
+      const m = {
+        code: 'SRV-' + String(seed % 1000).padStart(3, '0'), seed, target: name,
+        kind: 'DEEP FIELD · ' + a.kind, star: st, starCls: STAR_CLS[ st ],
+        dist: (12 + ~~(r() * 220)) + ' ly',
+        radius: rad.toFixed(1) + ' R⊕',
+        teq: teq + ' K',
+        period: (2 + r() * 400).toFixed(1) + ' d',
+        depth: clamp(rad * rad * 0.0084, 0.004, 2).toFixed(4) + ' %',
+        snr, haze, cloud, flatMute, artifacts,
+        atmosphere, life, flags: flags.length ? flags.join(' · ') : 'NONE — CLEAN EVENT',
+        notes: a.notes({ radius: rad, teq }) + (st === 'M' ? ' Note: the M-dwarf host adds dense stellar lines — do not mistake the star for the planet.' : ''),
+        sci: a.sci,
+      };
+      return m;
+    }
+    function startSandbox(fresh) {
+      if (fresh || !SBX.cur) { SBX.seed = (Math.random() * 1e9) | 0; SBX.cur = genMission(SBX.seed); }
+      missionIdx = -1; attempt = 0; renderBrief(); show('brief');
+    }
+
+    /* ================= evaluation & debrief ================= */
+    const VL = { abiotic: 'ABIOTIC', inc: 'INCONCLUSIVE', bio: 'BIOSIGNATURE' };
+    const QUOTES = {
+      'A+': '“Flawless. The committee recommends naming the next instrument after you.”',
+      'A': '“Unanimous approval. Rare air.”',
+      'B': '“Approved. One reviewer requests more transits; they always do.”',
+      'C': '“Conditionally published. Sharpen your band-center discipline.”',
+      'D': '“Major revision. The array carried you.”',
+      'E': '“Reviewer 2 filed a formal complaint. Reviewer 3 laughed.”',
+    };
+    let lastEval = null;
+    function catalogMol(id) {
+      if (S.catalog[ id ]) return;
+      S.catalog[ id ] = true; persist();
+      toast('NEW SPECIES CATALOGUED — ' + MOLS[ id ].sym);
+      sChime();
+      if (LIB_ORDER.every(x => S.catalog[ x ])) award('cartographer');
+    }
+    el('submitBtn').addEventListener('click', () => {
+      if (!A.markers.length) { toast('Log at least one feature before filing.'); return; }
+      AU.ensure();
+      const m = A.m, thr = Math.max(0.035, 2.6 * A.sigma);
+      const rows = [], claimedOK = new Set(); let pts = 0;
+      A.markers.forEach(mk => {
+        const mol = MOLS[ mk.mol ];
+        const art = (m.artifacts || []).find(a => Math.abs(a.c - mk.lam) < a.w * 1.6);
+        if (art) { rows.push({ mk, cls: 'sys', what: mol.sym + ' · ' + mk.lam.toFixed(2), why: 'systematic — ' + art.label, pts: '±0' }); return; }
+        const truth = m.atmosphere.includes(mk.mol);
+        const b = mol.bands.find(b => Math.abs(b.c - mk.lam) < Math.max(0.016, b.w * 1.8));
+        if (truth && b && effDepth(m, b) > thr)
+        {
+          pts += 10; claimedOK.add(mk.mol);
+          rows.push({ mk, cls: 'ok', what: mol.sym + ' · ' + mk.lam.toFixed(2), why: 'confirmed — band ' + b.c.toFixed(3) + ' μm', pts: '+10' });
+          award('first'); catalogMol(mk.mol);
+        }
+        else if (truth)
+        {
+          const zero = m.noClaim;
+          if (!zero) pts -= 4;
+          rows.push({
+            mk, cls: 'mid', what: mol.sym + ' · ' + mk.lam.toFixed(2),
+            why: b ? (zero ? 'real band but below detection limit — honestly noted, not claimed' : 'band present but below detection threshold') : 'no detectable band of ' + mol.sym + ' here',
+            pts: zero ? '±0' : '−4'
+          });
+        }
+        else { pts -= 8; S.stats.false++; rows.push({ mk, cls: 'bad', what: mol.sym + ' · ' + mk.lam.toFixed(2), why: mol.name + ' not present in this atmosphere', pts: '−8' }); }
+      });
+      if (rows.some(r => r.cls === 'ok')) S.stats.conf += rows.filter(r => r.cls === 'ok').length;
+      const missed = [];
+      m.atmosphere.forEach(id => { if (!claimedOK.has(id) && MOLS[ id ].bands.some(b => effDepth(m, b) > thr)) missed.push({ id }); });
+      const truthV = m.truth === 'inc' ? 'inc' : (m.life ? 'bio' : 'abiotic');
+      const vOK = A.verdict === truthV;
+      let vPts;
+      if (truthV === 'inc') vPts = A.verdict === 'inc' ? 25 : -25;      // flat stakes when the truth is silence
+      else vPts = A.verdict === 'inc' ? 0 : Math.round((vOK ? 25 : -25) * A.conf);
+      if (m.truth === 'inc' && A.verdict === 'inc') vPts = 40;         // +15 discipline bonus
+      if (A.verdict !== 'inc') { vOK ? S.stats.right++ : S.stats.wrong++; }
+      else if (truthV === 'inc') S.stats.right++;
+      pts = Math.max(0, pts + vPts);
+      lastEval = { rows, missed, vOK, vPts, total: pts };
+      if (missionIdx === -1)
+      {
+        S.survey.count++; S.survey.best = Math.max(S.survey.best, pts);
+        if (S.survey.count >= 10) award('surveyor');
+      } else
+      {
+        S.best[ missionIdx ] = Math.max(S.best[ missionIdx ], pts);
+        S.done[ missionIdx ] = true;
+        if (S.done.every(Boolean)) award('all8');
+      }
+      persist();
+      if (vOK && A.verdict === 'inc' && m.truth === 'inc') award('discipline');
+      if (vOK && A.verdict === 'abiotic' && (m.target === 'NAI-3 d' || m.target === 'KRY-77 b')) award('skeptic');
+      if (vOK && rows.length && !rows.some(r => r.cls === 'bad')) award('clean');
+      renderDebrief();
+      show('debrief');
+      vOK ? sWin() : sBad();
+    });
+    function renderDebrief() {
+      const m = A.m, E = lastEval, thr = Math.max(0.035, 2.6 * A.sigma);
+      el('dbHead').textContent = m.code + ' · ' + m.target;
+      const sc = el('dbScore');
+      sc.textContent = (E.total >= 0 ? '+' : '') + E.total;
+      sc.classList.toggle('neg', E.total < 0);
+      let ach = 0; m.atmosphere.forEach(id => MOLS[ id ].bands.forEach(b => { if (effDepth(m, b) > thr) ach++; }));
+      ach = ach * 10 + 25;
+      const ratio = clamp(E.total / Math.max(25, ach), 0, 1);
+      const grade = ratio >= 0.9 ? 'A+' : ratio >= 0.75 ? 'A' : ratio >= 0.6 ? 'B' : ratio >= 0.45 ? 'C' : ratio >= 0.25 ? 'D' : 'E';
+      el('dbGrade').textContent = grade;
+      const rows = el('dbRows'); rows.innerHTML = '';
+      E.rows.forEach(r => {
+        const d = document.createElement('div'); d.className = 'db-row ' + r.cls;
+        const tag = r.cls === 'ok' ? 'CONFIRMED' : r.cls === 'mid' ? (m.noClaim ? 'SUB-LIMIT' : 'MISPICK') : r.cls === 'sys' ? 'SYSTEMATIC' : 'FALSE ID';
+        d.innerHTML = '<span class="tag">' + tag + '</span><span class="what">' + r.what + '</span><span class="why">' + r.why + '</span><span class="pts">' + r.pts + '</span>';
+        rows.appendChild(d);
+      });
+      if (!E.rows.length) rows.innerHTML = '<div class="mon-empty">no features logged</div>';
+      const ms = el('dbMissed'); ms.innerHTML = '';
+      (m.artifacts || []).forEach(a => {
+        const d = document.createElement('div'); d.className = 'dm sys';
+        d.textContent = 'SYSTEMATIC — the dip at ' + a.c.toFixed(2) + ' μm was ' + a.label + ', not planetary.';
+        ms.appendChild(d);
+      });
+      if (E.missed.length)
+      {
+        const h = document.createElement('div'); h.className = 'sec-label'; h.style.margin = '16px 0 4px'; h.textContent = 'UNDETECTED SPECIES'; ms.appendChild(h);
+        E.missed.forEach(x => {
+          const d = document.createElement('div'); d.className = 'dm';
+          d.textContent = 'UNDETECTED — ' + MOLS[ x.id ].sym + ' · template bands ' + MOLS[ x.id ].bands.map(b => b.c.toFixed(2)).join(' · ') + ' μm';
+          ms.appendChild(d);
+        });
+      }
+      const you = el('cmpYou');
+      you.textContent = VL[ A.verdict ] + (A.verdict === 'inc' ? '' : ' · ×' + A.conf);
+      you.className = A.verdict === 'inc' ? '' : (E.vOK ? 'right' : 'wrong');
+      el('cmpTruth').textContent = m.truth === 'inc' ? 'UNRESOLVED — INCONCLUSIVE' : (m.life ? 'BIOLOGICAL' : 'ABIOTIC');
+      let note = '<span class="rev-quote">PEER REVIEW — ' + QUOTES[ grade ] + '</span>';
+      if (E.vOK) note += 'Your call matched the ground truth (' + (E.vPts >= 0 ? '+' : '') + E.vPts + ').';
+      else if (A.verdict === 'inc') note += 'You filed INCONCLUSIVE — no verdict points. The data was sufficient; commit next time.';
+      else note += 'Your call contradicted the ground truth (' + E.vPts + ').';
+      note += ' ' + m.sci;
+      el('dbNote').innerHTML = note;
+      const lg = el('dbLegend'); lg.innerHTML = '';
+      m.atmosphere.forEach(id => { const d = document.createElement('span'); d.className = 'lg'; d.innerHTML = '<i style="background:' + MOLS[ id ].color + '"></i>' + MOLS[ id ].sym; lg.appendChild(d); });
+      if (m.artifacts) { const d = document.createElement('span'); d.className = 'lg'; d.innerHTML = '<i style="background:#5b6470"></i>SYSTEMATIC'; lg.appendChild(d); }
+      const g1 = document.createElement('span'); g1.className = 'lg'; g1.innerHTML = '<i style="background:#5b6470"></i>STELLAR LINES'; lg.appendChild(g1);
+      const g2 = document.createElement('span'); g2.className = 'lg'; g2.innerHTML = '<i style="background:#e8a33d"></i>YOUR MARKS'; lg.appendChild(g2);
+      if (rep() >= 380) award('pi');
+      el('btnRetry').textContent = 'RE-OBSERVE';
+      el('btnNext').textContent = missionIdx === -1 ? 'NEW TARGET →' : (S.done.every(Boolean) ? 'VIEW CAREER REPORT' : 'NEXT MISSION →');
+      el('tbRep').textContent = rep(); el('tbRank').textContent = rankOf(rep());
+      requestAnimationFrame(drawTruth);
+    }
+    function drawTruth() {
+      const cv = el('specTruth'); if (!cv.clientWidth) return;
+      const [ ctx, W, H ] = prep(cv);
+      const m = A.m, bands = bandsFor(m);
+      ctx.fillStyle = '#0c0f14'; ctx.fillRect(0, 0, W, H);
+      const g = plotGeom(W, H);
+      drawGrid(ctx, g, W);
+      ctx.save(); ctx.beginPath(); ctx.rect(g.pl, g.pt, g.pr - g.pl, g.pb - g.pt); ctx.clip();
+      (m.artifacts || []).forEach(a => {
+        const x1 = w2x(a.c - a.w * 2.2, W), x2 = w2x(a.c + a.w * 2.2, W);
+        ctx.fillStyle = 'rgba(255,255,255,.06)'; ctx.fillRect(x1, g.pt, x2 - x1, g.pb - g.pt);
+        ctx.setLineDash([ 3, 4 ]); ctx.strokeStyle = 'rgba(255,255,255,.25)';
+        ctx.strokeRect(x1, g.pt, x2 - x1, g.pb - g.pt); ctx.setLineDash([]);
+        ctx.font = '9px "IBM Plex Mono"'; ctx.fillStyle = '#8b93a0'; ctx.textAlign = 'left';
+        ctx.fillText('STELLAR CONTAMINATION', Math.min(x1 + 5, g.pr - 150), g.pt + 13);
+      });
+      if (A.sigma > 0)
+      {
+        ctx.beginPath();
+        for (let x = Math.floor(g.pl); x <= g.pr; x++) { const y = g.pt + (1 - clamp(calcT(x2w(x, W), bands, m.haze) + A.sigma, 0, TMAX) / TMAX) * (g.pb - g.pt); x === Math.floor(g.pl) ? ctx.moveTo(x, y) : ctx.lineTo(x, y); }
+        for (let x = g.pr; x >= g.pl; x--) { const y = g.pt + (1 - clamp(calcT(x2w(x, W), bands, m.haze) - A.sigma, 0, TMAX) / TMAX) * (g.pb - g.pt); ctx.lineTo(x, y); }
+        ctx.closePath(); ctx.fillStyle = 'rgba(236,231,218,.05)'; ctx.fill();
+      }
+      if (A.flux)
+      {
+        ctx.beginPath();
+        for (let x = Math.floor(g.pl); x <= g.pr; x++) { const y = g.pt + (1 - clamp(A.flux[ x ], 0, TMAX) / TMAX) * (g.pb - g.pt); x === Math.floor(g.pl) ? ctx.moveTo(x, y) : ctx.lineTo(x, y); }
+        ctx.strokeStyle = 'rgba(236,231,218,.28)'; ctx.lineWidth = 1; ctx.stroke();
+      }
+      ctx.beginPath();
+      for (let x = Math.floor(g.pl); x <= g.pr; x++) { const y = g.pt + (1 - clamp(calcT(x2w(x, W), bands, m.haze), 0, TMAX) / TMAX) * (g.pb - g.pt); x === Math.floor(g.pl) ? ctx.moveTo(x, y) : ctx.lineTo(x, y); }
+      ctx.strokeStyle = '#ece7da'; ctx.lineWidth = 1.4; ctx.stroke(); ctx.lineWidth = 1;
+      ctx.restore();
+      A.markers.forEach(mk => {
+        const x = w2x(mk.lam, W);
+        ctx.strokeStyle = 'rgba(232,163,61,.85)'; ctx.beginPath(); ctx.moveTo(x, g.pb - 1); ctx.lineTo(x, g.pb - 13); ctx.stroke();
+        ctx.fillStyle = '#e8a33d'; ctx.beginPath(); ctx.arc(x, g.pb - 15, 2.2, 0, 7); ctx.fill();
+      });
+      ctx.strokeStyle = '#232a33'; ctx.strokeRect(g.pl + .5, g.pt + .5, g.pr - g.pl - 1, g.pb - g.pt - 1);
+      ctx.font = '9px "IBM Plex Mono"'; ctx.fillStyle = '#5b6470'; ctx.textAlign = 'left';
+      ctx.fillText('THIN — YOUR DATA · BOLD — TRUE MODEL', g.pl + 8, H - 8);
+    }
+    el('btnRetry').addEventListener('click', () => { attempt++; enterAnalysis(); show('analysis'); toast('New observation granted — fresh noise realization.'); });
+    el('btnNext').addEventListener('click', () => {
+      if (missionIdx === -1) { startSandbox(true); return; }
+      if (S.done.every(Boolean)) { renderFinal(); show('final'); }
+      else { missionIdx = Math.min(missionIdx + 1, MISSIONS.length - 1); attempt = 0; renderBrief(); show('brief'); }
+    });
+
+    /* ================= final ================= */
+    function renderFinal() {
+      const r = rep();
+      el('fnRank').textContent = rankOf(r);
+      el('fnTotal').textContent = r;
+      const nxt = RANKS.find(x => x[ 0 ] > r);
+      el('fnNext').textContent = nxt ? ('NEXT RANK AT ' + nxt[ 0 ] + ' REP — ' + nxt[ 1 ]) : 'HIGHEST CIVILIAN RANK ACHIEVED';
+      const st = S.stats;
+      const eff = (st.conf + st.false) > 0 ? Math.round(100 * st.conf / (st.conf + st.false)) + '%' : '—';
+      const acc = (st.right + st.wrong) > 0 ? Math.round(100 * st.right / (st.right + st.wrong)) + '%' : '—';
+      let stats =
+        '<div class="db-row ok"><span class="tag">FEATURES</span><span class="what">' + st.conf + ' confirmed</span><span class="why">' + st.false + ' false IDs</span><span class="pts">' + eff + ' efficiency</span></div>' +
+        '<div class="db-row ' + (st.right >= st.wrong ? 'ok' : 'bad') + '"><span class="tag">VERDICTS</span><span class="what">' + st.right + ' correct</span><span class="why">' + st.wrong + ' incorrect</span><span class="pts">' + acc + ' accuracy</span></div>' +
+        '<div class="db-row sys"><span class="tag">DEEP FIELD</span><span class="what">' + S.survey.count + ' targets reviewed</span><span class="why">procedural survey</span><span class="pts">best +' + S.survey.best + '</span></div>';
+      el('fnStats').innerHTML = stats;
+      const cg = el('fnCatalog'); cg.innerHTML = '';
+      LIB_ORDER.forEach(id => {
+        const m = MOLS[ id ], on = !!S.catalog[ id ];
+        const d = document.createElement('div'); d.className = 'badge' + (on ? ' on' : '');
+        d.innerHTML = '<b style="' + (on ? 'color:' + m.color : '') + '">' + m.sym + '</b><span>' + (on ? 'CATALOGUED — ' + m.name : 'not yet confirmed') + '</span>';
+        cg.appendChild(d);
+      });
+      const bg = el('fnBadges'); bg.innerHTML = '';
+      BADGES.forEach(b => {
+        const d = document.createElement('div'); d.className = 'badge' + (S.badges[ b.id ] ? ' on' : '');
+        d.innerHTML = '<b>' + b.name + '</b><span>' + b.desc + '</span>';
+        bg.appendChild(d);
+      });
+      const t = el('fnTable'); t.innerHTML = '';
+      MISSIONS.forEach((mm, i) => {
+        const row = document.createElement('div'); row.className = 'm-row done';
+        row.innerHTML = '<span class="m-idx">' + String(i + 1).padStart(2, '0') + '</span>' +
+          '<div class="m-info"><b>' + mm.target + '</b><em>' + mm.kind + '</em></div>' +
+          '<span class="m-st">BEST +' + S.best[ i ] + '</span>';
+        t.appendChild(row);
+      });
+    }
+    el('btnDeep').addEventListener('click', () => { AU.ensure(); startSandbox(true); });
+    el('btnReplay').addEventListener('click', () => {
+      S.best = []; S.done = []; S.stats = { conf: 0, false: 0, right: 0, wrong: 0 }; S.survey = { count: 0, best: 0 }; S.catalog = {};
+      while (S.best.length < MISSIONS.length) S.best.push(0);
+      while (S.done.length < MISSIONS.length) S.done.push(false);
+      persist();
+      el('tbRep').textContent = 0; el('tbRank').textContent = rankOf(0);
+      renderMissionList(); show('title'); toast('New rotation started. The archive awaits.');
+    });
+    el('btnTitle2').addEventListener('click', () => { renderMissionList(); show('title'); });
+
+    /* ================= briefing ================= */
+    function renderBrief() {
+      const m = curMission();
+      el('brCode').textContent = (missionIdx === -1 ? 'DEEP FIELD · ' : 'MISSION ') + m.code;
+      el('brName').textContent = m.target;
+      el('brKind').textContent = m.kind + ' · HOST ' + m.starCls;
+      el('brStar').textContent = m.starCls;
+      el('brDist').textContent = m.dist;
+      el('brRadius').textContent = m.radius;
+      el('brTeq').textContent = m.teq;
+      el('brPeriod').textContent = m.period;
+      el('brDepth').textContent = m.depth;
+      el('brSnr').textContent = m.snr + ' (extendable ×2, resolvable ×4)';
+      el('brFlags').textContent = m.flags;
+      el('brNotes').textContent = m.notes;
+    }
+    let schemT0 = performance.now(), schemBuf = [];
+    function drawSchem(now) {
+      const cv = el('schem'); if (!cv.clientWidth) return;
+      if (!drawSchem.init) { drawSchem.init = true; schemT0 = now; }
+      const [ ctx, W, H ] = prep(cv);
+      ctx.fillStyle = '#0c0f14'; ctx.fillRect(0, 0, W, H);
+      const sx = W * 0.5, sy = H * 0.36, rs = Math.min(W * 0.5, H * 0.62) * 0.24, pr = 6.5, P = 5200;
+      ctx.strokeStyle = '#232a33'; ctx.setLineDash([ 3, 5 ]); ctx.beginPath(); ctx.moveTo(18, sy); ctx.lineTo(W - 18, sy); ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle = '#e3b269'; ctx.beginPath(); ctx.arc(sx, sy, rs, 0, 7); ctx.fill();
+      ctx.strokeStyle = 'rgba(255,214,150,.45)'; ctx.beginPath(); ctx.arc(sx, sy, rs + 4, 0, 7); ctx.stroke();
+      const ph = ((now - schemT0) % P) / P, px = 24 + (W - 48) * ph, dx = px - sx;
+      let dip = 0; const edge = rs + pr;
+      if (Math.abs(dx) < edge) dip = 0.26 * Math.min(1, (1 - Math.abs(dx) / edge) * 2.4);
+      ctx.strokeStyle = 'rgba(232,163,61,.85)'; ctx.beginPath(); ctx.arc(px, sy, pr + 2.5, 0, 7); ctx.stroke();
+      ctx.fillStyle = '#2a313b'; ctx.beginPath(); ctx.arc(px, sy, pr, 0, 7); ctx.fill();
+      const t = (now - schemT0) / 1000;
+      schemBuf.push({ t, f: 1 - dip });
+      while (schemBuf.length && schemBuf[ 0 ].t < t - 7) schemBuf.shift();
+      const y0 = H * 0.80, amp = H * 0.15, xR = W / 7;
+      ctx.strokeStyle = '#1e252e'; ctx.beginPath(); ctx.moveTo(10, y0); ctx.lineTo(W - 10, y0); ctx.stroke();
+      ctx.beginPath();
+      schemBuf.forEach((p, i) => { const x = W - (t - p.t) * xR, y = y0 - (p.f - 1) * amp; i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y); });
+      ctx.strokeStyle = '#e8a33d'; ctx.lineWidth = 1.4; ctx.stroke(); ctx.lineWidth = 1;
+      ctx.font = '9px "IBM Plex Mono"'; ctx.fillStyle = '#5b6470';
+      ctx.fillText('LIGHT CURVE', 12, y0 + 14);
+      ctx.textAlign = 'right'; ctx.fillText('TRANSIT DEPTH ' + curMission().depth, W - 12, y0 + 14); ctx.textAlign = 'left';
+      ctx.fillText('STAR', sx - rs, sy - rs - 10);
+    }
+
+    /* ================= title ================= */
+    let stars = [];
+    function drawStars(now) {
+      const cv = el('starfield'); if (!cv.clientWidth) return;
+      if (!stars.length)
+      {
+        const r = mulberry32(7);
+        for (let i = 0; i < 180; i++)stars.push({ x: r(), y: r(), r: r() * 1.1 + 0.3, p: r() * 7, s: r() * 1 + 0.3, z: r() });
+      }
+      const [ ctx, W, H ] = prep(cv);
+      ctx.fillStyle = '#0a0c0f'; ctx.fillRect(0, 0, W, H);
+      const ox = (pmx - 0.5) * 26, oy = (pmy - 0.5) * 14;
+      stars.forEach(st => {
+        ctx.globalAlpha = 0.25 + 0.35 * Math.abs(Math.sin(now / 1000 * st.s + st.p));
+        ctx.fillStyle = '#cfd6de';
+        ctx.beginPath(); ctx.arc(st.x * W + ox * st.z, st.y * H + oy * st.z, st.r, 0, 7); ctx.fill();
+      });
+      ctx.globalAlpha = 1;
+    }
+    window.addEventListener('mousemove', e => { pmx = e.clientX / window.innerWidth; pmy = e.clientY / window.innerHeight; });
+    function renderMissionList() {
+      const box = el('missionList'); box.innerHTML = '';
+      MISSIONS.forEach((m, i) => {
+        const unlocked = i === 0 || S.done[ i - 1 ];
+        const row = document.createElement('div');
+        row.className = 'm-row ' + (S.done[ i ] ? 'done' : unlocked ? 'ready' : 'locked');
+        row.innerHTML = '<span class="m-idx">' + String(i + 1).padStart(2, '0') + '</span>' +
+          '<div class="m-info"><b>' + m.target + '</b><em>' + m.kind + ' · ' + m.starCls + ' · ' + m.dist + '</em></div>' +
+          '<span class="m-st">' + (S.done[ i ] ? 'COMPLETE · BEST +' + S.best[ i ] : unlocked ? 'READY' : 'LOCKED') + '</span>';
+        row.addEventListener('click', () => {
+          AU.ensure();
+          if (!unlocked) { toast('Clearance required — complete the previous mission.'); return; }
+          missionIdx = i; attempt = 0; renderBrief(); show('brief');
+        });
+        box.appendChild(row);
+      });
+      const srvOK = S.done[ 0 ];
+      const row = document.createElement('div');
+      row.className = 'm-row srv ' + (srvOK ? 'ready' : 'locked');
+      row.innerHTML = '<span class="m-idx">∞</span>' +
+        '<div class="m-info"><b>DEEP FIELD SURVEY</b><em>PROCEDURAL TARGETS · UNBOUNDED · GENERATED FRESH EACH VISIT</em></div>' +
+        '<span class="m-st">' + (srvOK ? (S.survey.count ? S.survey.count + ' FILED · BEST +' + S.survey.best : 'READY') : 'LOCKED') + '</span>';
+      row.addEventListener('click', () => {
+        AU.ensure();
+        if (!srvOK) { toast('Clearance required — complete MN-01 first.'); return; }
+        startSandbox(true);
+      });
+      box.appendChild(row);
+      el('clrLvl').textContent = String(S.done.filter(Boolean).length + 1);
+      el('btnStart').textContent = S.done.every(Boolean) ? 'REVIEW ARCHIVE' : 'BEGIN SHIFT';
+    }
+    el('btnStart').addEventListener('click', () => {
+      AU.ensure();
+      const i = S.done.findIndex(d => !d);
+      if (i < 0) { renderFinal(); show('final'); return; }
+      missionIdx = i; attempt = 0; renderBrief(); show('brief');
+    });
+
+    /* ================= screens ================= */
+    function show(name) {
+      scr = name;
+      document.querySelectorAll('.scr').forEach(s => s.classList.remove('active'));
+      el('scr-' + name).classList.add('active');
+      el('tbChip').classList.toggle('hidden', name === 'title');
+      if (name !== 'title') { const m = curMission(); el('tbChip').textContent = m.code + ' · ' + m.target; }
+      if (name === 'title') { stars = []; renderMissionList(); el('tbRep').textContent = rep(); el('tbRank').textContent = rankOf(rep()); }
+      if (name === 'analysis') { enterAnalysis(); AU.droneStart(); if (!S.hinted) startHints(); }
+      else AU.droneStop();
+      if (name === 'final') renderFinal();
+    }
+    el('btnOpen').addEventListener('click', () => { AU.ensure(); show('analysis'); toast('Transmission spectrum acquired. Click dips to log; drag to measure.'); });
+    el('logoBtn').addEventListener('click', () => { if (scr !== 'title') show('title'); });
+
+    /* ================= hints ================= */
+    let hintIdx = 0;
+    function startHints() { hintIdx = 0; el('hintBar').style.display = 'block'; showHint(); }
+    function showHint() {
+      el('hintStep').textContent = 'PROTOCOL ' + (hintIdx + 1) + '/' + HINTS.length;
+      el('hintTxt').textContent = HINTS[ hintIdx ];
+    }
+    function endHints() { el('hintBar').style.display = 'none'; S.hinted = true; persist(); }
+    el('hintNext').addEventListener('click', () => { sMark(); hintIdx++; if (hintIdx >= HINTS.length) endHints(); else showHint(); });
+    el('hintSkip').addEventListener('click', endHints);
+
+    /* ================= handbook ================= */
+    function buildHandbook() {
+      let mol = '';
+      LIB_ORDER.forEach(id => {
+        const m = MOLS[ id ];
+        mol += '<tr><td><span class="dotsym"><i style="background:' + m.color + '"></i>' + m.sym + '</span><br><span class="blurb">' + m.name + '</span></td>' +
+          '<td><span class="bands">' + m.bands.map(b => b.c.toFixed(2)).join(' · ') + ' μm</span><br><span class="blurb">' + m.blurb + '</span></td></tr>';
+      });
+      el('hbBody').innerHTML =
+        '<h3>01 · THE INSTRUMENT</h3>' +
+        '<p>When a planet crosses its star, a thin annulus of atmosphere backlights the planet. Molecules in that air <b>subtract their favorite wavelengths</b> from the starlight. The plot is <b>transmission vs wavelength (0.38–5.0 μm)</b>: 100 % is bare starlight, dips are absorbed light.</p>' +
+        '<div class="hb-step"><i>a.</i><span><b>Click any dip</b> to log a feature and match it to a molecular template band. Strength labels account for cloud muting on the current target.</span></div>' +
+        '<div class="hb-step"><i>b.</i><span><b>Click-drag across a band</b> to measure its depth against the noise floor. A detection must clear ~3σ. Below that, you are measuring noise.</span></div>' +
+        '<div class="hb-step"><i>c.</i><span>The <b>σ-corridor</b> is the 1σ pipeline error envelope. Dips that escape it are real; dips inside it are noise wearing a costume. Toggle with <kbd>C</kbd>.</span></div>' +
+        '<div class="hb-step"><i>d.</i><span><b>Extend integration</b> (<kbd>E</kbd>, 2 uses) halves the noise. <b>RESOLVE</b> (<kbd>R</kbd>, 1 use) switches to R≈280 and splits blended bands — e.g. H₂O and CH₄ both claim 1.40 μm.</span></div>' +
+        '<div class="hb-step"><i>e.</i><span><b>Right-click a marker</b> to delete it. <b>Click the magnifier</b> to pin it at a wavelength (click again to release); clicking a log chip pins it too. The logo returns to the title screen.</span></div>' +
+        '<div class="hb-step"><i>f.</i><span>Watch for <b>cosmic-ray hits</b>: brief spikes that decay within a second. Never log a transient.</span></div>' +
+        '<h3>02 · MOLECULAR REFERENCE</h3>' +
+        '<table class="hb-table">' + mol + '</table>' +
+        '<h3>03 · STELLAR IMPOSTORS</h3>' +
+        '<p>The host star adds its <b>own</b> absorption lines. They are not the planet\u2019s. Learn them or be fooled:</p>' +
+        '<table class="hb-table">' +
+        '<tr><td>G2V · 5,800 K</td><td><span class="bands">Ca II H&amp;K 0.393/0.397 · Hδ–Hβ 0.410–0.486 · Mg b 0.517 · Na D 0.589 · Hα 0.656</span><br><span class="blurb">Balmer lines dominate — a clean, familiar template.</span></td></tr>' +
+        '<tr><td>K2V · 4,900 K</td><td><span class="bands">Ca II H&amp;K strong · Na D 0.589 · Ca I 0.616 · K I 0.770 · Ca II triplet 0.849/0.866</span><br><span class="blurb">Neutral metals rise as hydrogen lines fade.</span></td></tr>' +
+        '<tr><td>M-dwarf · ~3,250 K</td><td><span class="bands">TiO bands 0.71–0.88 · Na I 0.819 · K I 0.770 / 1.169 / 1.243</span><br><span class="blurb">The great impostors: K I at 1.17/1.24 μm sits right beside methane territory.</span></td></tr>' +
+        '</table>' +
+        '<h3>04 · THE FIVE RULES</h3>' +
+        '<div class="hb-rule rA"><b>RULE A — DISEQUILIBRIUM (STRONG)</b><p>O₂ or O₃ together with CH₄. Oxygen and methane destroy each other; coexistence demands continuous replenishment from living processes.</p></div>' +
+        '<div class="hb-rule rB"><b>RULE B — OXIDIZING &amp; WET (CANDIDATE)</b><p>O₂ or O₃ with H₂O on a temperate world. Check for abiotic traps before celebrating.</p></div>' +
+        '<div class="hb-rule rC"><b>RULE C — METHANE DISEQUILIBRIUM (CANDIDATE)</b><p>CH₄ with CO₂ and no CO. Methane is a fuel; in an oxidizing CO₂ atmosphere it should be scarce unless something keeps producing it. CH₄ with CO (no CO₂ disequilibrium) fires nothing — that is the Titan solution.</p></div>' +
+        '<div class="hb-rule rE"><b>RULE E — NITROGEN CYCLE (CANDIDATE)</b><p>N₂O with H₂O and no CO. Nitrous oxide is produced overwhelmingly by microbes.</p></div>' +
+        '<div class="hb-rule rD"><b>RULE D — ABIOTIC OXYGEN (WARNING)</b><p>O₂/O₃ without CH₄, alongside CO or O₄. The ocean-loss regime. O₄ means crushing oxygen pressure — do not call life here.</p></div>' +
+        '<h3>05 · CLOUDS, SYSTEMATICS &amp; HONEST SILENCE</h3>' +
+        '<p><b>Cloud decks</b> raise the photosphere above most of the atmosphere and mute every molecular band — shortward of ~2 μm most of all, sometimes everywhere. A muted spectrum is not an empty one: extend integration, and remember that even a detected CH₄ + CO₂ pair cannot exclude the Titan solution while the CO test stays buried.</p>' +
+        '<p><b>Stellar contamination</b> — the Transit Light Source Effect — forges features when unocculted starspots skew the transit. Systematics are marked <b>±0</b> in peer review; logging them as molecules still costs a false ID.</p>' +
+        '<p>Sometimes the correct verdict is <b>INCONCLUSIVE</b> — and on designated targets, filing it earns a discipline bonus. “We cannot yet say” is a scientific result, not a failure. Overclaiming through a cloud deck, however, costs full stakes.</p>' +
+        '<h3>06 · THE DEEP FIELD</h3>' +
+        '<p>Beyond the eight assigned missions lies the <b>Deep Field survey</b>: procedurally generated worlds — furnace giants, smog sub-Neptunes, ocean candidates, Earth twins, quiet rocks — each with its own star, noise, clouds and chemistry. Every confirmed species is entered in your <b>personal catalog</b>. Ten survey reports earn the Surveyor commendation.</p>' +
+        '<h3>07 · SCORING</h3>' +
+        '<p><b>+10</b> per confirmed feature · <b>−4</b> mispick · <b>−8</b> false ID · <b>±0</b> systematic and honest sub-limit notes. Verdict <b>+25 / −25</b> × confidence (CAUTIOUS ×0.6 · STANDARD ×1 · CONVICTION ×1.6); INCONCLUSIVE scores nothing — unless the target is genuinely unresolvable, where it earns <b>+40</b> and a wrong hard call costs flat <b>−25</b>. A peer grade is computed against the maximum achievable. Career REP is the sum of your best campaign runs.</p>' +
+        '<h3>08 · SHORTCUTS</h3>' +
+        '<p><kbd>E</kbd> integration · <kbd>R</kbd> resolve · <kbd>C</kbd> corridor · <kbd>1</kbd>/<kbd>2</kbd>/<kbd>3</kbd> verdict · <kbd>Enter</kbd> submit · <kbd>Right-click</kbd> delete marker · <kbd>Esc</kbd> dismiss</p>' +
+        '<p style="margin-top:14px"><b>A final word:</b> the rules are heuristics, not laws. In this division, context is the instrument.</p>';
+    }
+    el('btnHandbook').addEventListener('click', () => { el('modalHb').classList.add('open'); });
+    el('hbClose').addEventListener('click', () => { el('modalHb').classList.remove('open'); });
+    el('modalHb').addEventListener('click', e => { if (e.target.id === 'modalHb') el('modalHb').classList.remove('open'); });
+    el('popClose').addEventListener('click', closePopover);
+
+    /* ================= sound toggle ================= */
+    el('btnSound').addEventListener('click', () => {
+      S.sound = !S.sound; persist();
+      el('icoOn').classList.toggle('hidden', !S.sound);
+      el('icoOff').classList.toggle('hidden', S.sound);
+      el('sndLbl').textContent = S.sound ? 'SOUND' : 'MUTED';
+      if (S.sound) { AU.ensure(); sMark(); if (scr === 'analysis') AU.droneStart(); }
+      else AU.droneStop();
+    });
+
+    /* ================= main loop & resize ================= */
+    function loop(now) {
+      requestAnimationFrame(loop);
+      if (scr === 'title') drawStars(now);
+      else if (scr === 'brief') drawSchem(now);
+      else if (scr === 'analysis')
+      {
+        if (now > A.nextGlitch)
+        {
+          A.nextGlitch = now + 9000 + Math.random() * 9000;
+          A.glitch = { t0: now, dur: 260 + Math.random() * 300, l0: WMIN + Math.random() * (WMAX - WMIN), w: 0.005 + Math.random() * 0.011, amp: 0.3 + Math.random() * 0.4 };
+          sGlitch();
+          if (!A.glitchToasted) { A.glitchToasted = true; toast('Cosmic-ray event — transient spike, do not log.'); }
+        }
+        drawMain(); drawZoom();
+      }
+    }
+    let rsT = null;
+    window.addEventListener('resize', () => {
+      clearTimeout(rsT);
+      rsT = setTimeout(() => {
+        stars = [];
+        if (scr === 'analysis') rebuildFlux();
+        if (scr === 'debrief') drawTruth();
+      }, 120);
+    });
+
+    /* ================= init ================= */
+    buildLibrary();
+    buildHandbook();
+    el('icoOn').classList.toggle('hidden', !S.sound);
+    el('icoOff').classList.toggle('hidden', S.sound);
+    el('sndLbl').textContent = S.sound ? 'SOUND' : 'MUTED';
+    el('tbRep').textContent = rep(); el('tbRank').textContent = rankOf(rep());
+    renderMissionList();
+    requestAnimationFrame(loop);
+  </script>
+</body>
+
+</html>
